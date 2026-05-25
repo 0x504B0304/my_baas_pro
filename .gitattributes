@@ -1,0 +1,4 @@
+web/static/ocr/*.onnx filter=lfs diff=lfs merge=lfs -text
+web/static/atx-agent_*.tar.gz filter=lfs diff=lfs merge=lfs -text
+web/static/cnocr.zip/** filter=lfs diff=lfs merge=lfs -text
+web/static/sk/*.jpg filter=lfs diff=lfs merge=lfs -text

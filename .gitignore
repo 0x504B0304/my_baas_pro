@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# OCR models (large binary files, managed by git-lfs)
+# web/static/ocr/*.onnx
+
+# YAML configs with secrets
+configs/*.yaml
+configs/*.yml
+!configs/app.yaml
