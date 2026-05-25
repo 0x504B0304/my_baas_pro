@@ -124,7 +124,7 @@ def empty_furniture_click_girl(self):
 
 def recover_preset(self, preset):
     open_preset_window(self, preset)
-    self.click(preset_position[preset], False)
+    self.click(*preset_position[preset], False)
     confirm_load_preset(self)
 
 
@@ -201,7 +201,7 @@ def invite_girl(self):
     if not self.tc['invite']['enable']:
         self.logger.warning('当前设置为: 不邀请学生')
         return
-    if image.compare_image(self, 'cafe_invite-status', 0):
+    if not image.compare_image(self, 'cafe_invite-status', 0):
         self.logger.warning('当前不可邀请学生')
         return
     to_invitation_ticket(self)

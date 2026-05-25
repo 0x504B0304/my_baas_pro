@@ -43,7 +43,7 @@
             "index": -999,
             "interval": 3600,
             "link_task": "",
-            "next": "2026-05-25 02:58:06",
+            "next": "2026-05-26 06:40:35",
             "text": "战术对抗赛"
         },
         "config": {
@@ -115,7 +115,7 @@
         "base": {
             "enable": true,
             "index": 30,
-            "next": "2026-05-25 05:00:00",
+            "next": "2026-05-27 05:00:00",
             "end": "",
             "interval": 0,
             "link_task": "",
@@ -123,32 +123,16 @@
         },
         "config": [
             {
-                "schedule": 9,
-                "count": 1
+                "schedule": 3,
+                "count": 2
             },
             {
-                "schedule": 10,
-                "count": 1
+                "schedule": 5,
+                "count": 2
             },
             {
                 "schedule": 6,
-                "count": 1
-            },
-            {
-                "schedule": 3,
-                "count": 1
-            },
-            {
-                "schedule": 9,
-                "count": 1
-            },
-            {
-                "schedule": 1,
-                "count": 1
-            },
-            {
-                "schedule": 2,
-                "count": 1
+                "count": 2
             }
         ]
     },
@@ -159,7 +143,7 @@
             "index": 40,
             "interval": 0,
             "link_task": "",
-            "next": "2026-05-25 05:00:00",
+            "next": "2026-05-27 05:00:00",
             "text": "小组"
         }
     },
@@ -170,7 +154,7 @@
             "index": 50,
             "interval": 0,
             "link_task": "",
-            "next": "2026-05-25 05:00:00",
+            "next": "2026-05-27 05:00:00",
             "text": "通缉悬赏"
         },
         "gjgl": {
@@ -217,7 +201,7 @@
             "index": 65,
             "interval": 0,
             "link_task": "",
-            "next": "2026-05-25 05:00:00",
+            "next": "2026-05-27 05:00:00",
             "text": "学园交流会"
         },
         "cnd": {
@@ -312,7 +296,7 @@
         "base": {
             "enable": false,
             "index": 90,
-            "next": "2026-05-24 02:31:16",
+            "next": "2026-05-26 07:01:54",
             "end": "",
             "interval": 3600,
             "link_task": "",
@@ -340,7 +324,7 @@
             "index": 110,
             "interval": 0,
             "link_task": "work_task",
-            "next": "2026-05-25 05:00:00",
+            "next": "2026-05-27 05:00:00",
             "text": "制造"
         },
         "config": {

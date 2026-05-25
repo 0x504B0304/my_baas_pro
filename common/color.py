@@ -1,6 +1,7 @@
 import math
 import time
 
+import cv2
 import numpy as np
 
 
@@ -23,6 +24,9 @@ def wait_rgb_similar(self, area, rgb, retry=999, threshold=100, rate=0.1, cl=Non
 def check_rgb(self, area, target_rgb=(250, 231, 69), threshold=100, ss_data=None, no_logger=False):
     if ss_data is None:
         sa = np.array(self.d.screenshot())
+        h, w = sa.shape[:2]
+        if h > w:
+            sa = cv2.rotate(sa, cv2.ROTATE_90_CLOCKWISE)
         sa_rgb = sa[area[1]][area[0]]
         get_rgb = (sa_rgb[0], sa_rgb[1], sa_rgb[2])
     else:

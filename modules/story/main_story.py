@@ -382,8 +382,8 @@ def start_story(self):
 
 
 def select_part_and_chapter(self, part, chapter):
-    self.click(part_position[part])
-    self.click(chapter_position[chapter])
+    self.click(*part_position[part], False)
+    self.click(*chapter_position[chapter])
 
 
 def select_story_cn(self):

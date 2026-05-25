@@ -77,7 +77,11 @@ def compute_schedule(con: str) -> dict:
             running.append(task)
             continue
 
-        if not base.get('enable', False) and end_str != '' and end_time < datetime.now():
+        if not base.get('enable', False):
+            closed.append(task)
+            continue
+
+        if end_str != '' and end_time < datetime.now():
             closed.append(task)
             continue
 

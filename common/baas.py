@@ -171,7 +171,7 @@ class Baas:
             self.ocrNum = CnOcr(
                 rec_model_name='number-densenet_lite_136-fc',
                 rec_model_fp=path + '/cnocr-v2.3-number-densenet_lite_136-fc-epoch=023.onnx',
-                det_model_name='ch_PP-OCRv5_det',
+                det_model_name='naive_det',
                 det_model_fp=det_fp,
             )
         except Exception as e:
@@ -269,9 +269,13 @@ class Baas:
             self.d.click(x, y)
 
     def get_screenshot_array(self):
-        return cv2.cvtColor(
+        img = cv2.cvtColor(
             np.array(self.d.screenshot()), cv2.COLOR_RGB2BGR
         )
+        h, w = img.shape[:2]
+        if h > w:
+            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        return img
 
     def click_condition(self, x, y, cond, fn, fn_args, wait=True, rate=0):
         if wait:
@@ -441,7 +445,9 @@ class Baas:
             except ValueError:
                 end_time = datetime.now() + timedelta(days=1)
                 con['base']['end'] = ''
-            if con['base']['enable'] and con['base']['end'] != '' and end_time < datetime.now():
+            if not con['base']['enable']:
+                continue
+            if con['base']['end'] != '' and end_time < datetime.now():
                 continue
             if next_time >= datetime.now():
                 continue
@@ -493,7 +499,10 @@ class Baas:
             if run_task is not None and run_task == ba_task:
                 running.append(task)
                 continue
-            if con['base']['enable'] and con['base']['end'] != '' and end_time < datetime.now():
+            if not con['base']['enable']:
+                closed.append(task)
+                continue
+            if con['base']['end'] != '' and end_time < datetime.now():
                 closed.append(task)
                 continue
             if next_time > datetime.now():

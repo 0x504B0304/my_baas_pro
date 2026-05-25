@@ -27,7 +27,7 @@ def get_work_prize(self):
     for btn in check_btn:
         while True:
             if color.check_rgb(self, btn['x'], (250, 236, 74)):
-                self.click(btn['cl'], False)
+                self.click(*btn['cl'], False)
                 stage.close_prize_info(self, True)
                 self.click(1236, 79)
                 break

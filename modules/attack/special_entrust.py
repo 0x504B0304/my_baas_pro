@@ -138,19 +138,19 @@ def choose_entrust(self, position, max_count):
 
         to_menu(self)
 
-        self.click(position[fn])
+        self.click(*position[fn])
 
         image.compare_image(self, 'wanted_stage-list')
 
         if tk['stage'] == 7:
-            stage.screen_swipe(self, tk['stage'], 6, 11, (911, 650, 911, 200, 0.55), f=True)
+            stage.screen_swipe(self, tk['stage'], 6, 11, f=(911, 650, 911, 200, 0.55))
             if self.tc['task'] == 'wanted':
                 time.sleep(0.1)
-                stage.screen_swipe(self, tk['stage'], 6, 11, False, (911, 650, 911, 200, 0.55), f=True)
+                stage.screen_swipe(self, tk['stage'], 6, 11, False, f=(911, 650, 911, 200, 0.55))
         else:
-            stage.screen_swipe(self, tk['stage'], 6, 99, (911, 650, 911, 40, 0.1), f=True)
+            stage.screen_swipe(self, tk['stage'], 6, 99, f=(911, 650, 911, 40, 0.1))
 
-        self.click(get_lv_position(self, tk['stage']))
+        self.click(*get_lv_position(self, tk['stage']))
 
         rst = stage.confirm_scan(self, tk['stage'], tk['count'], max_count)
 

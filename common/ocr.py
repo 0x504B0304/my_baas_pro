@@ -9,7 +9,10 @@ def screenshot(self):
 
 def screenshot_get_text(self, area, ocr=None, wait=99999, i=0):
     stage.wait_loading(self)
-    img = self.d.screenshot().crop(area)
+    ss = self.d.screenshot()
+    if ss.size[1] > ss.size[0]:
+        ss = ss.rotate(90, expand=True)
+    img = ss.crop(area)
     if ocr is None:
         out = self.ocr.ocr(img)
     else:

@@ -98,7 +98,7 @@ def start_buy(self, shop):
         'jp': (760, 560, False),
         'cn': (760, 580, False),
     }
-    self.click(p[self.game_server])
+    self.click(*p[self.game_server])
 
     stage.close_prize_info(self, True)
 
@@ -128,7 +128,7 @@ def choose_goods(self, goods, shop):
         }
         if g not in region_position[self.game_server]:
             continue
-        self.click(region_position[self.game_server][g], False)
+        self.click(*region_position[self.game_server][g], False)
 
 
 def refresh_shop(self, shop, i):

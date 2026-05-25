@@ -66,7 +66,7 @@ def recursion_click_house(self):
         'work_task_big-month-menu': (1245, 40),
     }
     ends = ('home_setting', 'home_student')
-    rst = image.detect(self, ends, pos, (1233, 11), retry=100)
+    rst = image.detect(self, ends, pos, (1233, 11), retry=500)
     if rst is None:
         self.logger.info('多次返回首页失败! 开始重启')
         return False

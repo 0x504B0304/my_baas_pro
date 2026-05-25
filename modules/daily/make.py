@@ -113,14 +113,14 @@ def choose_item(self):
     time.sleep(3)
     self.click(445, 552, False)
     check_index = get_high_priority(self)
-    self.click(priority_position[check_index + 1])
+    self.click(*priority_position[check_index + 1])
     return check_index
 
 
 def get_high_priority(self):
     items = []
     for i, position in priority_position.items():
-        self.click(position)
+        self.click(*position)
         item = ocr.screenshot_get_text(self, (720, 204, 1134, 269))
         items.append(item)
     check_item = None
