@@ -148,26 +148,31 @@ class Baas:
         self.fix_ocr1()
         try:
             path = get_froze_path('web/static/ocr')
+            # 共享检测模型：ch_PP-OCRv5_det（所有语言通用）
+            det_fp = path + '/ch_PP-OCRv5_det_infer.onnx'
+            # 英文 OCR：en_PP-OCRv4 识别模型
             self.ocrEN = CnOcr(
-                'en_PP-OCRv3_det',
-                path + '/en_PP-OCRv3_det_infer.onnx',
-                'en_PP-OCRv3',
-                path + '/en_PP-OCRv3_rec_infer.onnx',
+                rec_model_name='en_PP-OCRv4',
+                rec_model_fp=path + '/en_PP-OCRv4_rec_infer.onnx',
+                det_model_name='ch_PP-OCRv5_det',
+                det_model_fp=det_fp,
             )
             if self.game_server == 'cn':
+                # 中文 OCR：densenet_lite_136-gru 识别模型
                 self.ocr = CnOcr(
-                    'ch_PP-OCRv3_det',
-                    path + '/ch_PP-OCRv3_det_infer.onnx',
-                    'densenet_lite_136-fc',
-                    path + '/cn_densenet_lite_136.onnx',
+                    rec_model_name='densenet_lite_136-gru',
+                    rec_model_fp=path + '/cnocr-v2.3-densenet_lite_136-gru-epoch=004-ft-model.onnx',
+                    det_model_name='ch_PP-OCRv5_det',
+                    det_model_fp=det_fp,
                 )
             else:
                 self.ocr = self.ocrEN
+            # 数字 OCR：number-densenet_lite_136-fc 识别模型
             self.ocrNum = CnOcr(
-                'number-densenet_lite_136-fc',
-                path + '/cnocr-v2.2-number-densenet_lite_136-fc.onnx',
-                'number-densenet_lite_136-fc',
-                path + '/cnocr-v2.2-number-densenet_lite_136-fc.onnx',
+                rec_model_name='number-densenet_lite_136-fc',
+                rec_model_fp=path + '/cnocr-v2.3-number-densenet_lite_136-fc-epoch=023.onnx',
+                det_model_name='ch_PP-OCRv5_det',
+                det_model_fp=det_fp,
             )
         except Exception as e:
             self.show_ocr_error()
@@ -196,15 +201,12 @@ class Baas:
         if os.name != 'nt':
             return
         self.logger.warning('开始尝试自动修复OCR...')
-        users = os.listdir('C:\\Users\\')
-        for user_name in users:
-            if not os.path.isdir(f'C:\\Users\\{user_name}'):
-                continue
-            self.logger.info('修复用户: {0} ...'.format(user_name))
-            roaming_path = f'C:\\Users\\{user_name}\\AppData\\Roaming\\'
-            ocr_zip = config.get_froze_path('web/static/cnocr.zip')
-            with zipfile.ZipFile(ocr_zip, 'r') as zip_ref:
-                zip_ref.extractall(roaming_path)
+        user_name = getpass.getuser()
+        self.logger.info('修复用户: {0} ...'.format(user_name))
+        roaming_path = f'C:\\Users\\{user_name}\\AppData\\Roaming\\'
+        ocr_zip = config.get_froze_path('web/static/cnocr.zip')
+        with zipfile.ZipFile(ocr_zip, 'r') as zip_ref:
+            zip_ref.extractall(roaming_path)
         self.log_title('修复完成')
 
     def connect_serial(self):
@@ -215,7 +217,7 @@ class Baas:
             self.d = u2.connect(serial)
             ta = self.d.info
             self.logger.info(
-                '模拟器连接成功:{0}'.format(self.d.device_info['udid'])
+                '模拟器连接成功:{0}'.format(self.d.device_info['serial'])
             )
         except Exception as e:
             self.logger.critical(
@@ -233,28 +235,26 @@ class Baas:
             return
         self.log_title('开始检查ATX')
         try:
-            users = os.listdir('C:\\Users\\')
+            user_name = getpass.getuser()
             ocr_zip = config.get_froze_path(
                 'web/static/atx-agent_0.10.0_linux_386.tar.gz'
             )
             ocr_size = os.path.getsize(ocr_zip)
-            for user_name in users:
-                if not os.path.isdir(f'C:\\Users\\{user_name}'):
-                    continue
-                atx_path = (
-                    f'C:\\Users\\{user_name}'
-                    '\\.uiautomator2\\cache\\atx-agent_0.10.0_linux_386.tar.gz-1f8cdf3239'
-                )
-                if not os.path.exists(atx_path):
-                    os.makedirs(atx_path)
-                file_path = os.path.join(atx_path, 'atx-agent_0.10.0_linux_386.tar.gz')
-                if os.path.exists(file_path):
-                    osize = os.path.getsize(file_path)
-                    if osize == ocr_size:
-                        continue
-                    os.remove(file_path)
-                self.logger.warning('正在修复{0}...'.format(user_name))
-                shutil.copy(ocr_zip, atx_path)
+            atx_path = (
+                f'C:\\Users\\{user_name}'
+                '\\.uiautomator2\\cache\\atx-agent_0.10.0_linux_386.tar.gz-1f8cdf3239'
+            )
+            if not os.path.exists(atx_path):
+                os.makedirs(atx_path, exist_ok=True)
+            file_path = os.path.join(atx_path, 'atx-agent_0.10.0_linux_386.tar.gz')
+            if os.path.exists(file_path):
+                osize = os.path.getsize(file_path)
+                if osize == ocr_size:
+                    self.log_title('ATX检查完毕，无需修复')
+                    return
+                os.remove(file_path)
+            self.logger.warning('正在修复{0}...'.format(user_name))
+            shutil.copy(ocr_zip, atx_path)
             self.log_title('ATX修复完成...')
         except Exception as e:
             self.logger.error(str(e))

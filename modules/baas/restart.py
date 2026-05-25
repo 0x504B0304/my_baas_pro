@@ -98,7 +98,7 @@ def start_jp(self):
         'cm_agreement': (740, 490),
         'cm_get-prize': (350, 560),
     }
-    image.detect(self, 'home_student', pos, (1233, 11), cl=1, rate=1)
+    image.detect(self, 'home_student', pos, cl=(1233, 11), rate=1)
 
 
 def start_cn(self):
@@ -110,7 +110,7 @@ def start_cn(self):
         'cm_agreement': (740, 490),
         'cm_get-prize': (350, 560),
     }
-    image.detect(self, 'home_student', pos, (1233, 11), cl=1, rate=1)
+    image.detect(self, 'home_student', pos, cl=(1233, 11), rate=1)
 
 
 def start_intl(self):

@@ -168,14 +168,14 @@ def detect(self, end, possibles=None, cl=None, pre_func=None, pre_argv=None, ret
                     continue
 
         if type(end) is str:
-            if compare_image(self, end, 0, 0.7, False, nl=False, ss=self.latest_img_array):
+            if compare_image(self, end, 0, 0.7, nl=False, ss=self.latest_img_array):
                 return end
         else:
             for asset in end:
                 if type(asset) is str:
                     asset = (asset, 0.7)
                 threshold = asset[1]
-                if compare_image(self, asset[0], 0, threshold, False, nl=False, ss=self.latest_img_array):
+                if compare_image(self, asset[0], 0, threshold, nl=False, ss=self.latest_img_array):
                     return asset[0]
 
         if possibles is not None:
@@ -183,7 +183,7 @@ def detect(self, end, possibles=None, cl=None, pre_func=None, pre_argv=None, ret
                 threshold = 0.7
                 if len(obj) >= 3:
                     threshold = obj[2]
-                if compare_image(self, asset, 0, threshold, False, nl=False, ss=self.latest_img_array):
+                if compare_image(self, asset, 0, threshold, nl=False, ss=self.latest_img_array):
                     c = 0
                     if type(obj[0]) is int:
                         self.click(obj[0], obj[1], False)

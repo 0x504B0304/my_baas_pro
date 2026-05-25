@@ -7,7 +7,7 @@ import numpy as np
 def color_distance(rgb1, rgb2):
     r1, g1, b1 = rgb1
     r2, g2, b2 = rgb2
-    return math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
+    return math.sqrt((int(r1) - int(r2)) ** 2 + (int(g1) - int(g2)) ** 2 + (int(b1) - int(b2)) ** 2)
 
 
 def wait_rgb_similar(self, area, rgb, retry=999, threshold=100, rate=0.1, cl=None):

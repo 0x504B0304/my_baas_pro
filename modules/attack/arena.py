@@ -19,7 +19,6 @@ def do_fight(self):
         'arena_menu': (769, 251),
     }
     image.detect(self, 'arena_war-force', pos)
-
     pos = {
         'arena_war-force': (646, 571),
     }
@@ -34,7 +33,7 @@ def start(self):
 
 
 def get_prize(self):
-    image.detect(self, 'arena_id', (1235, 82), cl=True)
+    image.detect(self, 'arena_id', cl=(1235, 82))
     self.logger.warning('开始领取每日奖励')
     if color.check_rgb(self, (320, 400)):
         self.click(353, 385)
@@ -42,8 +41,6 @@ def get_prize(self):
     if color.check_rgb(self, (330, 480)):
         self.click(348, 465)
         stage.close_prize_info(self)
-        return
-    return
 
 
 def start_fight(self, wait=False):
@@ -52,16 +49,14 @@ def start_fight(self, wait=False):
         self.logger.error('入场券不足')
         get_prize(self)
         return
-    if not wait and not image.compare_image(self, 'arena_cd', 0):
+    if wait or not image.compare_image(self, 'arena_cd', 0):
         self.finish_seconds = finish_seconds
         return
     choose_enemy(self)
     do_fight(self)
-
-    image.compare_image(self, 'arena_skip', (1239, 600), 1, cl=True, rate=True)
-    image.compare_image(self, 'fight_edit-attack-force', (1163, 658), 1, True, cl=True, rate=True, n=True)
-    image.detect(self, 'arena_id', (1235, 82), cl=True)
-
+    image.compare_image(self, 'arena_skip', cl=(1239, 600), rate=1)
+    image.compare_image(self, 'fight_edit-attack-force', cl=(1163, 658), rate=1, n=True)
+    image.detect(self, 'arena_id', cl=(1235, 82))
     if self.tc['config']['get_type'] == 'one':
         self.sleep(1)
         self.finish_seconds = 0
@@ -74,8 +69,8 @@ def start_fight(self, wait=False):
 def choose_enemy(self):
     less_level = int(self.tc['config']['less_level'])
 
+    area = image.get_box(self, 'arena_my-lv')
     try:
-        area = image.get_box(self, 'arena_my-lv')
         my_lv = float(ocr.screenshot_get_text(self, area, self.ocrNum))
     except Exception:
         my_lv = 100
@@ -87,8 +82,8 @@ def choose_enemy(self):
             refresh = 0
             continue
 
+        area = image.get_box(self, 'arena_enemy-lv')
         try:
-            area = image.get_box(self, 'arena_enemy-lv')
             enemy_lv = float(ocr.screenshot_get_text(self, area, self.ocrNum))
         except Exception:
             enemy_lv = 0

@@ -1,0 +1,10 @@
+# Auto-generated from .pyc
+# Coordinate data module
+
+x = {
+    'sysmenu': (605, 205, 670, 240),
+    'fri-manage': (400, 490, 475, 530),
+    'menu': (26, 108, 128, 133),
+    'del-fri': (1105, 230, 1184, 250),
+    'del-notice': (605, 145, 670, 175),
+}

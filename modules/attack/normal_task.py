@@ -66,9 +66,9 @@ def start(self):
 
 def change_task(self):
     if 'hard_task' in self.tc['task']:
-        color.wait_rgb_similar(self, (1000, 150), (198, 66, 66), (1062, 154), cl=True)
+        color.wait_rgb_similar(self, (1000, 150), (198, 66, 66), cl=(1062, 154))
         return
-    color.wait_rgb_similar(self, (700, 150), (44, 65, 86), (803, 156), cl=True)
+    color.wait_rgb_similar(self, (700, 150), (44, 65, 86), cl=(803, 156))
 
 
 def start_scan(self):
@@ -78,19 +78,15 @@ def start_scan(self):
             continue
         for tk in stage.stage_convert(self.tc[l]['stage']):
             choose_region(self, tk['region'])
-
             if str(tk['stage']) == 'tr':
                 start_tr_scan(self, tk)
                 continue
-
             if self.tc['task'] == 'hard_task':
                 open_task_info_window(self, hard_task.hard_position[tk['stage']])
             else:
                 stage.screen_swipe(self, tk['stage'], 7)
                 open_task_info_window(self, normal_position[tk['stage']])
-
-            rst = stage.confirm_scan(self, tk['stage'], tk['count'], 99, 'special', t=True)
-
+            rst = stage.confirm_scan(self, tk['stage'], tk['count'], 99, t='special')
             if rst == 'return':
                 break
 
@@ -99,11 +95,11 @@ def start_tr_scan(self, tk):
     for i in range(tk['count']):
         stage.screen_swipe(self, 0, 0)
         tr_win = 'fight_force-edit-tr'
-        image.compare_image(self, 'normal_task_tr-quest', (1117, 340), 1, cl=True, rate=True)
-        image.compare_image(self, tr_win, (645, 511), 1, cl=True, rate=True)
+        image.compare_image(self, 'normal_task_tr-quest', cl=(1117, 340), rate=1)
+        image.compare_image(self, tr_win, cl=(645, 511), rate=1)
         exp_normal_task.start_choose_side_team(self)
         image.compare_image(self, tr_win)
-        image.compare_image(self, tr_win, 0.6, (1171, 670), 1, True, threshold=True, cl=True, rate=True, n=True)
+        image.compare_image(self, tr_win, threshold=0.6, cl=(1171, 670), rate=1, n=True)
         self.logger.info('开始教程关卡...')
         main_story.auto_fight_put_skill(self)
         exp_normal_task.to_task_menu(self)
@@ -112,9 +108,10 @@ def start_tr_scan(self, tk):
 def choose_region(self, region):
     try:
         cu_region = int(ocr.screenshot_get_text(self, (122, 178, 163, 208), self.ocrNum))
-        self.logger.warning('当前区域{0}，需要前往区域{1}...'.format(cu_region, region))
     except Exception:
         cu_region = 0
+
+    self.logger.warning('当前区域{0}，需要前往区域{1}...'.format(cu_region, region))
 
     if cu_region == region:
         return

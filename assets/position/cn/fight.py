@@ -1,0 +1,31 @@
+# Auto-generated from .pyc
+# Coordinate data module
+
+x = {
+    'start-task': (107, 9, 162, 36),
+    'tasking': (7, 7, 67, 38),
+    'edit-attack-force': (107, 9, 245, 36),
+    'force-edit': (107, 9, 162, 36),
+    'force-edit-tr': (107, 9, 162, 36),
+    'attack': (1126, 642, 1191, 670),
+    'skip-fight': (1111, 531, 1136, 556),
+    'not-skip': (608, 145, 670, 176),
+    'auto-over': (1072, 589, 1094, 611),
+    'fighting-task-info': (580, 78, 705, 115),
+    'confirm': (732, 483, 800, 516),
+    'prize-confirm1': (618, 655, 665, 680),
+    'pass-confirm': (1144, 649, 1194, 674),
+    'pass-confirm2': (610, 645, 670, 670),
+    'task-finish-confirm': (1000, 648, 1063, 678),
+    'prize-confirm': (742, 642, 803, 668),
+    'prize-confirm2': (606, 653, 675, 681),
+    'force-attack': (107, 9, 217, 36),
+    'fail': (604, 638, 672, 672),
+    'unlock': (620, 490, 665, 515),
+    'fn-unlock': (610, 145, 670, 177),
+    'ht-unlock': (440, 355, 545, 380),
+    'new-effect': (590, 110, 685, 145),
+    'yushe': (580, 85, 705, 115),
+    'yushe-confirm': (580, 85, 705, 115),
+    'stop': (608, 140, 670, 170),
+}

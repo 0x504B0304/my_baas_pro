@@ -1,0 +1,30 @@
+# Auto-generated from .pyc
+# Coordinate data module
+
+x = {
+    'baohuo': (60, 80, 126, 126),
+    'notice': (610, 146, 640, 175),
+    'skip-menu': (1177, 27, 1228, 51),
+    'confirm': (737, 505, 797, 535),
+    'activity-menu': (107, 9, 162, 36),
+    'bonus-tzbd': (575, 75, 705, 105),
+    'get-prize': (638, 129, 690, 190),
+    'agreement': (505, 175, 625, 210),
+    'activity-task-info': (540, 145, 745, 180),
+    'activity-task-info2': (540, 145, 745, 180),
+    'activity-sss': (219, 512, 251, 527),
+    'activity-sss2': (365, 315, 395, 335),
+    'activity-sss3': (151, 514, 181, 528),
+    'activity-unlock': (68, 568, 93, 593),
+    'activity-notice': (107, 9, 162, 36),
+    'activity-exchange-menu': (160, 10, 300, 38),
+    'activity-exchange-again': (860, 587, 1000, 615),
+    'activity-exchange-over': (860, 587, 1000, 615),
+    'activity-exchange-clean': (925, 400, 966, 430),
+    'dice-menu': (160, 10, 300, 38),
+    'dice-need': (573, 315, 680, 345),
+    'ap': (557, 11, 607, 36),
+    'activity-hb': (1168, 184, 1230, 206),
+    'activity-banner': (95, 150, 131, 188),
+    'activity-prize-info': (1077, 643, 1170, 670),
+}
