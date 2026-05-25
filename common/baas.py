@@ -104,7 +104,6 @@ class Baas:
         self.init_ocr()
         env_check.check_resolution(self)
         env_check.baohuo(self, 1)
-        limit.check_limit(self)
 
         self.processes_task = processes_task
         self.next_task = ''
@@ -310,15 +309,6 @@ class Baas:
         sys.exit(1)
 
     def check_close_game(self):
-        if limit.user_type == 'free':
-            wait_list = self.task_schedule(None)['waiting']
-            if len(wait_list) > 0:
-                wait = wait_list[0]
-                next_time = datetime.strptime(wait['next'], '%Y-%m-%d %H:%M:%S')
-                self.logger.error(next_time)
-                if next_time >= datetime.now() + timedelta(seconds=1800):
-                    prefix = '当前任务已全部完成，正在关闭脚本！开通赞助版后可24小时不断运行！谢谢'
-                    limit.check_fn_limit(self, prefix)
         if self.bc['baas']['close_game']['enable']:
             try:
                 app = self.d.app_current()
@@ -374,7 +364,6 @@ class Baas:
                 self.finish_seconds = 0
                 self.md = None
                 self.log_title('开始执行【' + tc['base']['text'] + '】')
-                limit.check_fn(self)
                 try:
                     func_dict[fn](self)
                 except RestartTaskException:

@@ -40,9 +40,6 @@ _YAML_TEMPLATE = (
     '\n'
     '# 关闭窗口行为：null = 每次询问，tray = 隐藏到托盘，quit = 直接退出\n'
     'close_action: {close_action}\n'
-    '\n'
-    '# B站视频：记录上次已打开的视频地址，地址变更时自动重新打开\n'
-    'bilibili_url: {bilibili_url}\n'
 )
 
 
@@ -98,8 +95,6 @@ def _write_app_data(data: dict):
         else:
             close_action_str = 'null'
 
-        bilibili_url = data.get('bilibili_url', '')
-
         content = _YAML_TEMPLATE.format(
             version=f'"{ver}"',
             config_order=_list_str(order),
@@ -108,7 +103,6 @@ def _write_app_data(data: dict):
             dark_theme='true' if dark_theme else 'false',
             geometry=geo_str,
             close_action=close_action_str,
-            bilibili_url=f'"{bilibili_url}"' if bilibili_url else 'null',
         )
 
         os.makedirs(os.path.dirname(_app_file()), exist_ok=True)
@@ -202,17 +196,6 @@ def clear_geometry():
     _write_app_data(data)
 
 
-_BILIBILI_URL = 'https://www.bilibili.com/video/BV12JdHB5E5Y'
-
-
-def check_open_bilibili():
-    """启动时若当前 B 站视频地址与上次记录的不同则自动打开，并更新 app.yaml。"""
-    import webbrowser
-    data = _read_app_data()
-    if data.get('bilibili_url') != _BILIBILI_URL:
-        webbrowser.open(_BILIBILI_URL)
-        data['bilibili_url'] = _BILIBILI_URL
-        _write_app_data(data)
 
 
 def get_ordered_accounts() -> list:

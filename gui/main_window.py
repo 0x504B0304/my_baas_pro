@@ -1,13 +1,13 @@
 import ctypes
 import ctypes.wintypes
 
-from PySide6.QtCore import Qt, QObject, QEvent, QPoint, Signal, QSize, QTimer, QThread
+from PySide6.QtCore import Qt, QObject, QEvent, QPoint, Signal, QSize, QTimer
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QPainterPath, QColor
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QStackedWidget, QPushButton, QLabel, QApplication, QDialog, QCheckBox, QSystemTrayIcon, QMenu, QSplitter, QSplitterHandle
 
-from common import app as app_module, config as app_config, limit, process
+from common import app as app_module, config as app_config, process
 from common.app import load_theme, save_theme, load_close_action, save_close_action
-from gui.sidebar import Sidebar, DASHBOARD_FN, HOME_FN, HELP_FN, SUPPORT_FN, CONFIG_MGMT_FN
+from gui.sidebar import Sidebar, DASHBOARD_FN, HOME_FN, HELP_FN, CONFIG_MGMT_FN
 from gui.config_panel import ConfigPanel
 from gui.dashboard_widget import DashboardWidget
 from gui.home_widget import HomeWidget
@@ -98,14 +98,6 @@ class _SidebarSplitter(QSplitter):
         return _SidebarHandle(self.orientation(), self)
 
 
-class _StartupCheckThread(QThread):
-
-    done = Signal()
-
-    def run(self):
-        if limit.user_id == '':
-            limit.register()
-        self.done.emit()
 
 
 class _BtnCursorFilter(QObject):
@@ -385,21 +377,6 @@ class MainWindow(QMainWindow):
         else:
             self._sidebar.select_home()
 
-        self._startup_thread = _StartupCheckThread()
-        self._startup_thread.done.connect(self._on_startup_check_done)
-        self._startup_thread.start()
-
-    def _on_startup_check_done(self):
-        if limit.user_type == 'support':
-            if app_module.check_show_release():
-                QTimer.singleShot(200, lambda: show_release(self))
-                return
-            return
-        self._sidebar.select_home()
-        self._home_widget.set_tab(3)
-        self._title_bar.set_breadcrumb('关于赞助')
-        self._sidebar.select_menu(SUPPORT_FN)
-
     def showEvent(self, event):
         super().showEvent(event)
         self._apply_win_style()
@@ -490,21 +467,19 @@ class MainWindow(QMainWindow):
         self.move((screen.width() - 1280) // 2, (screen.height() - 800) // 2)
 
     def _on_menu(self, con: str, fn: str):
-        if fn in (HOME_FN, HELP_FN, SUPPORT_FN, CONFIG_MGMT_FN):
+        if fn in (HOME_FN, HELP_FN, CONFIG_MGMT_FN):
             self._dashboard.stop()
             self._stack.setCurrentIndex(0)
             tab_idx = {
                 HOME_FN: 0,
                 HELP_FN: 1,
                 CONFIG_MGMT_FN: 2,
-                SUPPORT_FN: 3,
             }[fn]
             self._home_widget.set_tab(tab_idx)
             crumb = {
                 HOME_FN: '主页',
                 HELP_FN: '帮助教程',
                 CONFIG_MGMT_FN: '配置管理',
-                SUPPORT_FN: '关于赞助',
             }[fn]
             self._title_bar.set_breadcrumb(crumb)
             return

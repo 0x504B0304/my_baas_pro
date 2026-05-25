@@ -59,7 +59,7 @@
                 },
                 "notify.enable": {
                         "name": "启用该功能",
-                        "desc": "安卓下载地址: https://gitee.com/baas-pro/baas-windows/releases/download/git/ntfy.apk<br/>苹果下载地址: https://apps.apple.com/us/app/ntfy/id1625396347<br/></br>设置步骤:</br>1. 点击添加主题</br>2. 主题名称输入自己的设备ID</br>3. 勾选使用其他服务器</br>4. 服务器地址输入: http://ntfy.killuaaa.cn</br>5. 点击订阅</br></br>更多设置请自行查看官网(设置): https://docs.ntfy.sh/",
+                        "desc": "消息推送功能基于 ntfy 实现，请参考 https://docs.ntfy.sh/ 进行配置。",
                         "type": "bool"
                 },
                 "notify.finish_single": {

@@ -1,25 +1,10 @@
-import json
-import os
-import random
-import uuid
-import time
-import datetime
+# BAAS Pro - Stub module (licensing removed)
 
-import requests
-
-from common import ocr, image, device, encrypt, app
-from modules.baas import home, restart
-
-salt = '?vupeR@.Q3<tV0dK4B*6sf1^POb~HC'
-
-user_type = ''
+user_type = 'support'
 user_id = ''
 source = ''
 ca = 0
 price = 0
-
-https_host = 'https://baas.killuaaa.cn'
-http_host = 'http://baas.killuaaa.cn'
 
 
 def check_fn(self):
@@ -32,7 +17,7 @@ def get_fn_state(self):
     return 'active'
 
 
-def check_fn_limit(self, prefix="<b style='color:red;font-size:20px'>当前功能试用次数已用光！请升级为赞助版本或关闭该任务,谢谢~</b>"):
+def check_fn_limit(self, prefix=""):
     # 已禁用许可检测限制
     return False
 

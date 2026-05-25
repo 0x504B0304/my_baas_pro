@@ -51,7 +51,6 @@ def _make_icon(path: str) -> QIcon:
 DASHBOARD_FN = '__dashboard__'
 HOME_FN = '__home__'
 HELP_FN = '__help__'
-SUPPORT_FN = '__support__'
 CONFIG_MGMT_FN = '__config_mgmt__'
 
 MENUS = [
@@ -178,7 +177,6 @@ class Sidebar(QWidget):
         self._icon_home = _make_icon('assets/icon/home.png')
         self._icon_overview = _make_icon('assets/icon/overview.png')
         self._icon_help = _make_icon('assets/icon/help.png')
-        self._icon_diam = _make_icon('assets/icon/diam.png')
         self._icon_settings = _make_icon('assets/icon/config.png')
 
         self._setup_ui()
@@ -312,7 +310,6 @@ class Sidebar(QWidget):
             (HOME_FN, '主页', self._icon_home),
             (HELP_FN, '帮助教程', self._icon_help),
             (CONFIG_MGMT_FN, '配置管理', self._icon_settings),
-            (SUPPORT_FN, '关于赞助', self._icon_diam),
         ):
             item = QTreeWidgetItem([text])
             item.setIcon(0, icon)
@@ -354,7 +351,6 @@ class Sidebar(QWidget):
         self._icon_down = _make_icon(f'{base}/down.{ext}')
         self._icon_home = _make_icon(f'{base}/home.png')
         self._icon_help = _make_icon(f'{base}/help.png')
-        self._icon_diam = _make_icon(f'{base}/diam.png')
         self._icon_settings = _make_icon(f'{base}/config.png')
 
         self._home_btn.setIcon(self._icon_home)
@@ -365,11 +361,10 @@ class Sidebar(QWidget):
             if item is None:
                 continue
             payload = item.data(0, Qt.UserRole)
-            if payload and payload[0] == '' and payload[1] in (HOME_FN, HELP_FN, SUPPORT_FN, CONFIG_MGMT_FN):
+            if payload and payload[0] == '' and payload[1] in (HOME_FN, HELP_FN, CONFIG_MGMT_FN):
                 icon_map = {
                     HOME_FN: self._icon_home,
                     HELP_FN: self._icon_help,
-                    SUPPORT_FN: self._icon_diam,
                     CONFIG_MGMT_FN: self._icon_settings,
                 }
                 item.setIcon(0, icon_map[payload[1]])

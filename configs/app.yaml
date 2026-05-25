@@ -26,10 +26,7 @@ log_show: true
 dark_theme: false
 
 # 窗口位置和大小（由程序自动维护，请勿手动修改）
-geometry: {x: 34, y: 42, w: 1280, h: 800}
+geometry: {x: -880, y: -1503, w: 1280, h: 800}
 
 # 关闭窗口行为：null = 每次询问，tray = 隐藏到托盘，quit = 直接退出
 close_action: null
-
-# B站视频：记录上次已打开的视频地址，地址变更时自动重新打开
-bilibili_url: "https://www.bilibili.com/video/BV12JdHB5E5Y"

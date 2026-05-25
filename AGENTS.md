@@ -28,7 +28,7 @@ baas_source/
 │   ├── image.py                # 图像模板匹配、SSIM 对比、detect() 探测
 │   ├── color.py                # RGB 颜色距离计算与检测
 │   ├── ocr.py                  # OCR 文字识别封装
-│   ├── limit.py                # 授权验证、速率限制、消息推送
+│   ├── limit.py                # 消息推送
 │   ├── app.py                  # 应用状态、bilibili 视频检测
 │   ├── log.py                  # 日志系统
 │   ├── encrypt.py              # 加密/哈希工具
@@ -38,7 +38,7 @@ baas_source/
 ├── gui/                        # PySide6 图形界面
 │   ├── main_window.py          # 主窗口 (MainWindow, _TitleBar, 托盘、关闭对话框)
 │   ├── sidebar.py              # 侧边栏 (Sidebar, 账号列表、菜单导航)
-│   ├── home_widget.py          # 首页 (赞助/帮助/配置管理/主题设置)
+│   ├── home_widget.py          # 首页 (帮助/配置管理/主题设置)
 │   ├── dashboard_widget.py     # 仪表盘 (任务面板、日志输出、调度计划)
 │   ├── config_panel.py         # 配置面板 (JSON 编辑器、各模块参数设置)
 │   ├── widgets.py              # 自定义控件 (SpinnerWidget, ToggleSwitchWidget)
@@ -237,7 +237,6 @@ func_dict = {
   - 账号切换、重命名、删除
 - **HomeWidget** — 首页容器
   - `_HomeTab` — 主题设置、重置配置、清理日志、更新日志
-  - `_SupportTab` — 赞助/付费页面
   - `_HelpTab` — 帮助/教程页面
   - `_ConfigMgmtTab` — 配置排序、重命名、删除、自动启动管理
 - **DashboardWidget** — 运行仪表盘
@@ -279,8 +278,7 @@ main.py
  ├── 导入 QApplication, MainWindow
  ├── 初始化 multiprocessing.Manager
  ├── 创建 MainWindow(migrate_errors)
- └── 启动 threading.Thread(target=limit.register)
-     └── QApplication.exec()
+ └── QApplication.exec()
 
 对每个账号配置:
 process.baas_dashboard(con, processes_task)

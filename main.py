@@ -51,12 +51,7 @@ if __name__ == '__main__':
     if os.getpid() == main_process_pid:
         migrate_errors = check_config()
 
-        from common.app import check_open_bilibili
-        check_open_bilibili()
-
         from gui.main_window import MainWindow
-        import threading
-        from common import limit as _limit
 
         # Set Windows taskbar icon/model ID (best-effort)
         if os.name == 'nt':
@@ -76,8 +71,5 @@ if __name__ == '__main__':
         # Create and show the main window
         window = MainWindow(migrate_errors=migrate_errors)
         window.show()
-
-        # Start the rate-limiter background thread
-        threading.Thread(target=_limit.register, daemon=True).start()
 
         sys.exit(qt_app.exec())

@@ -263,7 +263,6 @@ _BASE = (
     '\n'
     '/* ── Home separator ──────────────────────────────────── */\n'
     'QFrame#home_sep { color: #dfe6e9; }\n'
-    'QWidget#promo_bar { background: transparent; }\n'
     'QFrame#home_card { border: 1px solid #dfe6e9; border-radius: 8px; background: transparent; }\n'
     '\n'
     '/* ── Config row card ─────────────────────────────────── */\n'
