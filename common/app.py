@@ -12,7 +12,7 @@ def _resource_path(relative_path):
         base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, relative_path)
 
-version = 'v6.0.0.1'
+version = 'v6.0.0.5'
 
 _YAML_TEMPLATE = (
     '# BAAS Pro 应用配置文件\n'
