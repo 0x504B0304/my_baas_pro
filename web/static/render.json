@@ -46,6 +46,29 @@
                         "name": "卡识别重启游戏",
                         "type": "bool"
                 },
+                "base.controller_type": {
+                        "desc": "触控后端方案</br>- uiautomator2: 默认方案，使用ATX代理，兼容性最好，但可能会经常卡死</br>- ADB shell: 纯adb shell input命令，无需额外依赖</br>- Minitouch: 原生二进制，高性能，需要设备有evdev触摸节点</br>- MaaTouch: Java版触控，自动推送JAR到设备",
+                        "items": [
+                                {
+                                        "name": "uiautomator2",
+                                        "value": "u2"
+                                },
+                                {
+                                        "name": "ADB shell",
+                                        "value": "adb"
+                                },
+                                {
+                                        "name": "Minitouch",
+                                        "value": "minitouch"
+                                },
+                                {
+                                        "name": "MaaTouch",
+                                        "value": "maatouch"
+                                }
+                        ],
+                        "name": "触控方案",
+                        "type": "sel"
+                },
                 "close_game": {
                         "name": "关闭游戏设置"
                 },

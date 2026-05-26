@@ -4,7 +4,8 @@
             "package": "com.RoamingStar.BlueArchive.bilibili",
             "serial": "127.0.0.1:16384",
             "ss_rate": 0.1,
-            "error_restart_game": true
+            "error_restart_game": true,
+            "controller_type": "u2"
         },
         "close_game": {
             "enable": true

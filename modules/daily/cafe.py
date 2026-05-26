@@ -89,7 +89,7 @@ def drag_gift_click_girl(self):
         t1 = threading.Thread(target=shot, args=(self,))
         t1.start()
         self.click(131, 660, False)
-        self.swipe(131, 660, 1280, 660, duration=0.5)
+        self.swipe(131, 660, 1280, 660, duration=2)
         t1.join()
         res = match(self, self.latest_img_array)
         result_list = list(set((int(x), min(int(y), 591)) for x, y in res))
@@ -168,6 +168,8 @@ def confirm_load_preset(self):
 
 
 def init_window(self):
+    self.pinch_in(640, 360, 300, 0.5)
+    time.sleep(0.5)
     self.swipe(392, 564, 983, 82)
 
 

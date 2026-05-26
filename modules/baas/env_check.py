@@ -35,19 +35,13 @@ def check_resolution(self):
     @return:
     """
     self.log_title('️开始检查分辨率')
-    ss = self.d.screenshot()
-    w, h = ss.size
-    if h > w:
-        w, h = h, w
-    if w < 1280 or h < 720:
-        self.exit('模拟器分辨率至少为1280 x 720！当前分辨率为:{0} * {1}，请到模拟器设置中调高分辨率。完成后必须重启模拟器！'.format(w, h))
-    if abs(w / h - 16 / 9) > 0.05:
-        self.exit('模拟器分辨率必须为16:9比例！当前分辨率为:{0} * {1}，请到模拟器设置中设置分辨率和DPI。完成后必须重启模拟器！'.format(w, h))
-    from common.controller_scale import ScaleProxy
-    self.scale_proxy = ScaleProxy(w, h)
-    self.logger.info('分辨率检查通过: {0}x{1}, 视图窗口: {2}x{3}, 缩放系数: x{4:.2f} y{5:.2f}'.format(
-        w, h, self.scale_proxy.view_width, self.scale_proxy.view_height,
-        self.scale_proxy.scale_x, self.scale_proxy.scale_y))
+    try:
+        sp = self.controller.init_scale_proxy()
+    except RuntimeError as e:
+        self.exit(str(e))
+    self.logger.info('分辨率检查通过: 原始{0}x{1}, 视图窗口: {2}x{3}, 缩放系数: x{4:.2f} y{5:.2f}'.format(
+        sp.raw_width, sp.raw_height, sp.view_width, sp.view_height,
+        sp.scale_x, sp.scale_y))
 
 
 def baohuo(self, count):

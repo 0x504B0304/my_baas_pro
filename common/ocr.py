@@ -1,10 +1,12 @@
 import time
+import cv2
 from fuzzywuzzy import fuzz
 from common import stage, image, config
 
 
 def screenshot(self):
-    self.d.screenshot(config.get_ss_path(self))
+    img = self.get_screenshot_array(raw=True)
+    cv2.imwrite(config.get_ss_path(self), img)
 
 
 def screenshot_get_text(self, area, ocr=None, wait=99999, i=0):

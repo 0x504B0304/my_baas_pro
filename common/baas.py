@@ -12,13 +12,11 @@ from datetime import datetime, timedelta
 
 import cv2
 import numpy as np
-import uiautomator2 as u2
 from cnocr import CnOcr
-from uiautomator2 import Device
 
 from common import stage, process, config, log, encrypt, limit, device
 from common.config import get_froze_path
-from common.controller_scale import ScaleProxy
+from common.controller import create_controller, Controller
 
 from modules.activity import (
     god_cross, cn_activity, cn_jmjh,
@@ -79,7 +77,7 @@ class Baas:
     ocr: CnOcr
     ocrEN: CnOcr
     ocrNum: CnOcr
-    d: Device
+    controller: Controller
     bc: dict
     tc: dict
     game_server: str
@@ -94,6 +92,7 @@ class Baas:
         self.latest_img_array = None
         self.con = con
         self.compare_count = 0
+        self.controller = None
 
         if processes_task is None:
             return
@@ -102,6 +101,8 @@ class Baas:
         self.load_config()
         self.game_server = self.calc_game_server()
         self.connect_serial()
+        self.d = self.controller
+        self.d._wait_loading = lambda: stage.wait_loading(self)
         self.init_ocr()
         env_check.check_resolution(self)
         env_check.baohuo(self, 1)
@@ -137,8 +138,8 @@ class Baas:
     def init_atx(self):
         self.log_title('开始初始化ATX')
         try:
-            self.d.app_stop('com.github.uiautomator')
-            self.d.app_start('com.github.uiautomator')
+            self.controller.app_stop('com.github.uiautomator')
+            self.controller.app_start('com.github.uiautomator')
         except Exception as e:
             self.logger.error('ATX初始化失败:{0}'.format(e))
             return
@@ -214,10 +215,12 @@ class Baas:
         serial = self.bc['baas']['base']['serial']
         try:
             self.log_title('开始连接模拟器:{0}'.format(serial))
-            self.d = u2.connect(serial)
-            ta = self.d.info
+            ctype = self.bc['baas']['base'].get('controller_type', 'u2')
+            self.controller = create_controller(ctype)
+            self.controller.set_logger(self.logger)
+            self.controller.connect(serial)
             self.logger.info(
-                '模拟器连接成功:{0}'.format(self.d.device_info['serial'])
+                '模拟器连接成功:{0}'.format(self.controller.device_info.get('serial', serial))
             )
         except Exception as e:
             self.logger.critical(
@@ -262,56 +265,35 @@ class Baas:
     def click(self, x, y, wait=True, count=1, rate=0):
         if wait:
             stage.wait_loading(self)
-        dx, dy = self.scale_proxy.to_device(x, y)
-        for i in range(count):
-            self.logger.info('click (%s,%s)', x, y)
-            if rate > 0:
-                time.sleep(rate)
-            self.d.click(dx, dy)
+        self.controller.click(x, y, wait=False, count=count, rate=rate)
 
     def get_screenshot_array(self, raw=False):
-        img = cv2.cvtColor(
-            np.array(self.d.screenshot()), cv2.COLOR_RGB2BGR
-        )
-        h, w = img.shape[:2]
-        if h > w:
-            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-        if raw:
-            return img
-        return self.scale_proxy.resize_screenshot(img)
+        return self.controller.screenshot(raw=raw)
 
     def click_condition(self, x, y, cond, fn, fn_args, wait=True, rate=0):
         if wait:
             stage.wait_loading(self)
-        self.click(x, y, False)
+        self.controller.click(x, y, wait=False)
         while cond != fn(self, *fn_args):
             time.sleep(rate)
-            self.click(x, y, False)
+            self.controller.click(x, y, wait=False)
 
     def double_click(self, x, y, wait=True, count=1, rate=0):
         if wait:
             stage.wait_loading(self)
-        dx, dy = self.scale_proxy.to_device(x, y)
-        for i in range(count):
-            self.logger.info('double_click (%s,%s)', x, y)
-            if rate > 0:
-                time.sleep(rate)
-            self.d.double_click(dx, dy)
+        self.controller.double_click(x, y, wait=False, count=count, rate=rate)
 
     def swipe(self, fx, fy, tx, ty, duration=None):
-        self.logger.info('swipe %s %s %s %s duration:%s', fx, fy, tx, ty, duration)
-        dfx, dfy = self.scale_proxy.to_device(fx, fy)
-        dtx, dty = self.scale_proxy.to_device(tx, ty)
-        self.d.swipe(dfx, dfy, dtx, dty, duration=duration)
+        self.controller.swipe(fx, fy, tx, ty, duration=duration)
 
     def long_click(self, x, y, duration=2):
-        self.logger.info('long_click (%s,%s) duration:%s', x, y, duration)
-        dx, dy = self.scale_proxy.to_device(x, y)
-        self.d.long_click(dx, dy, duration)
+        self.controller.long_click(x, y, duration=duration)
 
     def press(self, key):
-        self.logger.info('press %s', key)
-        self.d.press(key)
+        self.controller.press(key)
+
+    def pinch_in(self, x, y, distance, duration=0.3):
+        self.controller.pinch_in(x, y, distance, duration=duration)
 
     def exit(self, msg):
         if msg != '':
@@ -327,7 +309,7 @@ class Baas:
     def check_close_game(self):
         if self.bc['baas']['close_game']['enable']:
             try:
-                app = self.d.app_current()
+                app = self.controller.app_current()
                 if app['package'] != self.bc['baas']['base']['package']:
                     return True
             except Exception as e:

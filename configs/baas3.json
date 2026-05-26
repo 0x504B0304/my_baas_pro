@@ -4,7 +4,8 @@
             "package": "com.RoamingStar.BlueArchive.bilibili",
             "serial": "192.168.10.150:5002",
             "ss_rate": 0.1,
-            "error_restart_game": true
+            "error_restart_game": true,
+            "controller_type": "maatouch"
         },
         "close_game": {
             "enable": true
@@ -43,7 +44,7 @@
             "index": -999,
             "interval": 3600,
             "link_task": "",
-            "next": "2026-05-26 14:26:45",
+            "next": "2026-05-26 17:00:16",
             "text": "战术对抗赛"
         },
         "config": {
@@ -97,7 +98,7 @@
         "base": {
             "enable": true,
             "index": 400,
-            "next": "2026-05-26 14:33:25",
+            "next": "2026-05-26 17:16:12",
             "end": "",
             "interval": 3600,
             "link_task": "",
@@ -288,7 +289,7 @@
             "index": 400,
             "interval": 3600,
             "link_task": "",
-            "next": "2026-05-26 14:33:34",
+            "next": "2026-05-26 17:00:42",
             "text": "领取邮箱"
         }
     },
