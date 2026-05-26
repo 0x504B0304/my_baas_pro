@@ -73,7 +73,6 @@ a = Analysis(
         # 工具
         'yaml',
         'fuzzywuzzy',
-        # 加密
         # 通用
         'json',
         're',

@@ -7,14 +7,13 @@ import os
 import shutil
 import sys
 import time
-import zipfile
 from datetime import datetime, timedelta
 
 import cv2
 import numpy as np
 from cnocr import CnOcr
 
-from common import stage, process, config, log, encrypt, limit, device
+from common import stage, process, config, log, encrypt, limit
 from common.config import get_froze_path
 from common.controller import create_controller, Controller
 
@@ -146,7 +145,6 @@ class Baas:
 
     def init_ocr(self):
         self.log_title('开始初始化OCR')
-        self.fix_ocr1()
         try:
             path = get_froze_path('web/static/ocr')
             # 共享检测模型：ch_PP-OCRv5_det（所有语言通用）
@@ -179,36 +177,6 @@ class Baas:
             self.show_ocr_error()
             self.logger.error('OCR初始化失败:{0}'.format(e))
             self.exit('OCR初始化失败，程序终止')
-
-    def fix_ocr1(self):
-        if os.name != 'nt':
-            return
-        try:
-            device.get_deviceid()
-            device.get_cid()
-        except Exception:
-            msg = (
-                'Exception occurred: Failed to download model: en_PP-OCRv3_rec_infer-onnx.zip.\n'
-                '    Please open your VPN and try again. \n'
-                '    If this error persists, please follow the instruction at '
-                '[CnSTD/CnOCR Doc](https://www.breezedeus.com/cnocr) to manually download the model files.'
-            )
-            self.logger.critical('OCR初始化失败1:{0}'.format(msg))
-            self.show_ocr_error()
-            self.logger.warning('开始尝试自动修复OCR...')
-            self.exit('设备初始化失败')
-
-    def fix_ocr(self):
-        if os.name != 'nt':
-            return
-        self.logger.warning('开始尝试自动修复OCR...')
-        user_name = getpass.getuser()
-        self.logger.info('修复用户: {0} ...'.format(user_name))
-        roaming_path = f'C:\\Users\\{user_name}\\AppData\\Roaming\\'
-        ocr_zip = config.get_froze_path('web/static/cnocr.zip')
-        with zipfile.ZipFile(ocr_zip, 'r') as zip_ref:
-            zip_ref.extractall(roaming_path)
-        self.log_title('修复完成')
 
     def connect_serial(self):
         self.fix_atx()
