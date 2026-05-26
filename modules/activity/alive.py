@@ -106,14 +106,14 @@ def start_draw_card(self):
     time.sleep(2)
     while True:
         if color.check_rgb(self, (800, 600), (118, 220, 255)):
-            image.detect(self, 'alive_card', (815, 568), cl=(815, 568))
+            image.detect(self, 'alive_card', cl=(815, 568))
         if not color.check_rgb(self, (970, 590), (245, 233, 74)):
             self.logger.error('不能抽卡了...')
             return None
         time.sleep(0.1)
         self.click(1050, 560)
         ends = (('alive_not-210', 0.9), ('alive_210', 0.9))
-        end = image.detect(self, ends, (620, 666), 0, cl=None, rate=None)
+        end = image.detect(self, ends, rate=0)
         if end == 'alive_not-210':
             self.logger.error('不能抽卡了...')
             return None
@@ -166,7 +166,7 @@ def start_fight(self, t, bonus_index, stage_index, tab):
         gk = f'{tab}-{stage_index}'
         if gk in stage_data:
             image.compare_image(self, 'fight_force-edit')
-            image.compare_image(self, 'fight_force-edit', 0.6, (1171, 670), 1, True, threshold=0.6, cl=(1171, 670), rate=1, n=True)
+            image.compare_image(self, 'fight_force-edit', threshold=0.6, cl=(1171, 670), rate=1, n=True)
         else:
             self.stage_data = stage_data
             if t == 'exp':
@@ -186,7 +186,7 @@ def start_fight(self, t, bonus_index, stage_index, tab):
         elif prev_bonus_index != bonus_index:
             exp_normal_task.start_bonus_single(self, bonus_index)
             prev_bonus_index = bonus_index
-        image.compare_image(self, 'fight_force-edit', 0.6, (1171, 670), 1, True, threshold=0.6, cl=(1171, 670), rate=1, n=True)
+        image.compare_image(self, 'fight_force-edit', threshold=0.6, cl=(1171, 670), rate=1, n=True)
     main_story.auto_fight(self)
     self.logger.info('强制等待25秒...')
     time.sleep(25)
@@ -215,9 +215,9 @@ def skip_story(self):
 
 def wait_task_info(self, open_info=True):
     if open_info:
-        image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), (1082, 190), 1, cl=(1082, 190))
+        image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), cl=(1082, 190), rate=1)
         return None
-    image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), 10, cl=None)
+    image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), retry=10)
     return None
 
 

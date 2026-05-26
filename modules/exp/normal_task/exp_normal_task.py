@@ -103,7 +103,7 @@ def auto_choose(self):
     image.detect(self, 'cm_bonus-tzbd', p)
     time.sleep(1)
     self.double_click(650, 600, False)
-    image.compare_image(self, 'cm_bonus-tzbd', (1150, 590), True)
+    image.compare_image(self, 'cm_bonus-tzbd', cl=(1150, 590), n=True)
 
 
 def start_fight(self, region, gk=None):
@@ -135,7 +135,7 @@ def start_fight(self, region, gk=None):
     if dz_fight:
         start_choose_side_team(self)
         image.compare_image(self, end)
-        image.compare_image(self, end, 0.6, (1171, 670), 1, True)
+        image.compare_image(self, end, threshold=0.6, cl=(1171, 670), rate=1, n=True)
     else:
         if gk in self.stage_data:
             self.logger.critical('本关卡{0}尚未支持开图，正在全力研发中...'.format(gk))
@@ -174,9 +174,9 @@ def start_fight(self, region, gk=None):
 
 def check_skip_auto_over(self):
     time.sleep(1)
-    image.compare_image(self, 'fight_auto-over', 0.6, self.click, (1082, 599), 2)
+    image.compare_image(self, 'fight_auto-over', threshold=0.6, cl=(1082, 599), rate=2)
     ends = ('fight_skip-fight', 'fight_not-skip')
-    end = image.detect(self, ends, (1123, 545), 2, 5)
+    end = image.detect(self, ends, cl=(1123, 545), rate=2, retry=5)
     ns = end == 'fight_not-skip'
     if self.tc['task'] == 'exp_hard_task' and ns:
         self.exit('请先通关普通任务5-5解锁跳过战斗后,在运行困难自动推图...')
@@ -347,16 +347,16 @@ def start_action(self, gk, stage_data, attr='action'):
             time.sleep(1)
             self.click(act['p'][0] - 100, act['p'][1])
         elif act['t'] == 'close_skip':
-            image.compare_image(self, 'fight_skip-fight', (1123, 545), 2, 5, True)
+            image.compare_image(self, 'fight_skip-fight', cl=(1123, 545), rate=2, retry=5, n=True)
         elif act['t'] == 'open_skip':
-            image.compare_image(self, 'fight_skip-fight', (1123, 545), 2, 5)
+            image.compare_image(self, 'fight_skip-fight', cl=(1123, 545), rate=2, retry=5)
         elif act['t'] == 'abort_fight':
-            image.compare_image(self, 'fight_stop', (1230, 40), 1)
+            image.compare_image(self, 'fight_stop', cl=(1230, 40), rate=1)
             time.sleep(1)
             self.click(906, 510)
             time.sleep(1)
             self.click(770, 500)
-            image.compare_image(self, 'main_story_fight-fail', (770, 500), 1)
+            image.compare_image(self, 'main_story_fight-fail', cl=(770, 500), rate=1)
             time.sleep(1)
             self.click(650, 650)
         elif act['t'] == 'end-turn':
@@ -425,14 +425,14 @@ def start_choose_team_yushe(self, team_name):
 
 def choose_yushe_and_start_action(self, team_name):
     self.logger.error('当前使用预设队伍：{0}'.format(team_name))
-    image.compare_image(self, 'fight_team-lock', 0.8, self.click, (1201, 670), 2)
+    image.compare_image(self, 'fight_team-lock', threshold=0.8, cl=(1201, 670), rate=2)
     time.sleep(2)
     self.click(1200, 183)
     time.sleep(1)
     self.click(1200, 183)
     self.press('back')
     time.sleep(1)
-    image.compare_image(self, 'fight_team-lock', (1120, 500))
+    image.compare_image(self, 'fight_team-lock', cl=(1120, 500))
     return
 
 
@@ -440,7 +440,7 @@ def choose_team_and_start_action(self, team_name):
     self.logger.info('当前使用队伍：{0}'.format(team_name))
     pos = image.get_box(self, 'cm_team-stop')
     self.click(pos[0], pos[1])
-    image.compare_image(self, 'fight_team-stop', 0.95, self.click, (1040, 667), 1, True)
+    image.compare_image(self, 'fight_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
     image.compare_image(self, 'cm_team-ok', True, 10)
     stage.wait_loading(self)
 
@@ -452,14 +452,14 @@ def start_bonus_team(self, gk):
     self.click(1140, 670, False)
     time.sleep(1)
     self.click(1140, 670, False)
-    image.compare_image(self, 'cm_team-stop', 0.95, self.click, (1040, 667), 1, True)
+    image.compare_image(self, 'cm_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
     time.sleep(0.3)
     image.detect(self, 'cm_bonus-start', {}, (1200, 660))
     time.sleep(0.3)
     image.detect(self, 'cm_bonus-start', {}, (1200, 680))
     time.sleep(0.3)
     self.click(770, 500)
-    image.compare_image(self, 'fight_team-stop', 0.95, self.click, (1040, 667), 1, True)
+    image.compare_image(self, 'fight_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
     time.sleep(1)
     self.click(770, 500)
     image.compare_image(self, 'cm_team-ok', True, 10)
@@ -471,7 +471,7 @@ def start_bonus_single_intl(self, gk):
         return
     self.logger.warning('当前使用加成队伍：{0}'.format(gk))
     time.sleep(1)
-    image.compare_image(self, 'cm_bonus-tzbd', True, 1, self.click, (1200, 185))
+    image.compare_image(self, 'cm_bonus-tzbd', cl=(1200, 185))
     start_mission(self)
     time.sleep(1)
     stage.wait_loading(self)
@@ -481,14 +481,14 @@ def start_bonus_single(self, gk):
     self.logger.warning('当前使用加成队伍：{0}'.format(gk))
     pos = image.get_box(self, 'cm_team-stop')
     self.click(pos[0], pos[1])
-    image.compare_image(self, 'fight_team-stop', 0.95, self.click, (1040, 667), 1, True)
+    image.compare_image(self, 'fight_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
     image.compare_image(self, 'cm_team-ok', True, 10)
     stage.wait_loading(self)
 
 
 def choose_bonus_and_start_action(self, team_name):
     self.logger.info('当前使用加成队伍：{0}'.format(team_name))
-    image.compare_image(self, 'cm_bonus-tzbd', True, 1, self.double_click, (1140, 670))
+    image.compare_image(self, 'cm_bonus-tzbd', cl=(1140, 670))
     stage.wait_loading(self)
 
 
@@ -507,7 +507,7 @@ def select_force_fight(self):
 
 def wait_over(self):
     stage.wait_loading(self, False)
-    image.compare_image(self, 'fight_pass-confirm', (770, 500), 2)
+    image.compare_image(self, 'fight_pass-confirm', cl=(770, 500), rate=2)
 
 
 def start_mission(self):

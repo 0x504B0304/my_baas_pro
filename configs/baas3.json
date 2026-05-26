@@ -116,24 +116,44 @@
         "base": {
             "enable": true,
             "index": 30,
-            "next": "2026-05-27 05:00:00",
-            "end": "",
+            "next": null,
+            "end": null,
             "interval": 0,
             "link_task": "",
             "text": "日程"
         },
         "config": [
             {
-                "schedule": 3,
-                "count": 2
+                "schedule": 9,
+                "count": 1
             },
             {
-                "schedule": 5,
-                "count": 2
+                "schedule": 10,
+                "count": 1
             },
             {
                 "schedule": 6,
-                "count": 2
+                "count": 1
+            },
+            {
+                "schedule": 3,
+                "count": 1
+            },
+            {
+                "schedule": 9,
+                "count": 1
+            },
+            {
+                "schedule": 1,
+                "count": 1
+            },
+            {
+                "schedule": 11,
+                "count": 1
+            },
+            {
+                "schedule": 2,
+                "count": 1
             }
         ]
     },

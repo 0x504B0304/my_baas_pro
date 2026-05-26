@@ -31,7 +31,7 @@ def check_sort(self):
     :param self:
     """
     set_unread_sort(self)
-    image.compare_image(self, 'momo_talk_sort-direction', self.click, (625, 180, False), 0.5)
+    image.compare_image(self, 'momo_talk_sort-direction', cl=(625, 180), rate=0.5)
 
 
 def set_unread_sort(self):
@@ -67,7 +67,7 @@ def start_chat(self):
                 self.logger.warning('开始回消息... ')
                 self.mm_i = 0
                 for r in rst:
-                    self.click(r, False)
+                    self.click(*r, False)
                 break
 
             rst = image.find_img(self, self.latest_img_array, 'momo_talk_likable', y_add=62)
@@ -75,7 +75,7 @@ def start_chat(self):
                 self.logger.warning('开始好感故事...')
                 self.mm_i = 0
                 for r in rst:
-                    self.click(r, False)
+                    self.click(*r, False)
                 begin_relationship(self)
                 break
 

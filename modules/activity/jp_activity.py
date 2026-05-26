@@ -40,7 +40,7 @@ def to_tab(self, t):
         'challenge': ((1190, 103, 1191, 104), (77, 55, 40)),
         'challenge-task': ((1190, 103, 1191, 104), (77, 55, 40)),
     }
-    if image.compare_image(self, 'cn_activity_quest', 3, (730, 110), cl=(730, 110)):
+    if image.compare_image(self, 'cn_activity_quest', retry=3, cl=(730, 110)):
         tabs['task'] = ((1115, 103, 1116, 104), (77, 55, 40))
     tab = tabs[t]
     color.wait_rgb_similar(self, tab[0], tab[1], tab[0][0] - 100, tab[0][1], cl=tab[1])
@@ -205,7 +205,7 @@ def start_fight(self, t, bonus_index, stage_index, tab):
         gk = f'{tab}-{stage_index}'
         if gk in stage_data:
             image.compare_image(self, 'fight_force-edit')
-            image.compare_image(self, 'fight_force-edit', 0.6, (1171, 670), 1, True, threshold=0.6, cl=(1171, 670), rate=1, n=True)
+            image.compare_image(self, 'fight_force-edit', threshold=0.6, cl=(1171, 670), rate=1, n=True)
         else:
             self.stage_data = stage_data
             if t == 'exp':
@@ -225,7 +225,7 @@ def start_fight(self, t, bonus_index, stage_index, tab):
         elif prev_bonus_index != bonus_index:
             exp_normal_task.start_bonus_single(self, bonus_index)
             prev_bonus_index = bonus_index
-        image.compare_image(self, 'fight_force-edit', 0.6, (1171, 670), 1, True, threshold=0.6, cl=(1171, 670), rate=1, n=True)
+        image.compare_image(self, 'fight_force-edit', threshold=0.6, cl=(1171, 670), rate=1, n=True)
     main_story.auto_fight(self)
     self.logger.info('强制等待25秒...')
     time.sleep(25)
@@ -254,9 +254,9 @@ def skip_story(self):
 
 def wait_task_info(self, open_info=True):
     if open_info:
-        image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), (1082, 190), 1, cl=(1082, 190))
+        image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), cl=(1082, 190), rate=1)
         return None
-    image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), 10, cl=None)
+    image.detect(self, ('cm_activity-task-info', 'cm_activity-task-info2', 'normal_task_side-quest'), retry=10)
     return None
 
 

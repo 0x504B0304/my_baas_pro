@@ -227,8 +227,8 @@ def lianhe_fihgt(self):
         if image.compare_image(self, 'main_story_lianhe-finish', 5):
             self.click(922, 95)
             continue
-        image.compare_image(self, 'main_story_lianhe-edit-force', 0.6, (640, 580), 1)
-        image.compare_image(self, 'main_story_lianhe-edit-force', 0.6, (1171, 670), 1, True)
+        image.compare_image(self, 'main_story_lianhe-edit-force', threshold=0.6, cl=(640, 580), rate=1)
+        image.compare_image(self, 'main_story_lianhe-edit-force', threshold=0.6, cl=(1171, 670), rate=1, n=True)
         auto_fight(self)
         stage.wait_loading(self)
         check_momo_talk(self)
@@ -281,7 +281,7 @@ def start_admission(self, chapter):
         end = image.detect(self, ends)
 
         if end == 'fight_force-attack':
-            image.compare_image(self, 'fight_force-attack', self.click, (1163, 658), 1, True)
+            image.compare_image(self, 'fight_force-attack', cl=(1163, 658), rate=1, n=True)
             if self.game_server == 'cn':
                 auto_fight(self)
                 time.sleep(30)
@@ -316,7 +316,7 @@ def check_momo_talk(self):
     if image.compare_image(self, 'momo_talk_begin-relationship', 0, 0.5):
         self.click(920, 568, False)
         time.sleep(5)
-        image.compare_image(self, 'momo_talk_confirm-skip', 0.5, self.click, (1212, 114, False))
+        image.compare_image(self, 'momo_talk_confirm-skip', threshold=0.5, cl=(1212, 114))
 
     if image.compare_image(self, 'main_story_get-prize', 0, 0.5):
         self.click(644, 634, False)
@@ -340,28 +340,28 @@ def wait_fight_over(self):
 
 
 def check_jp_continue(self):
-    image.compare_image(self, 'main_story_skip-story2', 0.5, self.click, (757, 451))
+    image.compare_image(self, 'main_story_skip-story2', threshold=0.5, cl=(757, 451))
 
 
 def skip_main_story_plot(self):
-    image.compare_image(self, 'fight_fail', 5, self.click, (647, 655), 1, True)
-    image.compare_image(self, 'main_story_continue', 5, self.click, (505, 520), 1)
-    image.compare_image(self, 'main_story_continue', 5, self.click, (505, 520), 1, True)
-    image.compare_image(self, 'main_story_skip-story', 5, self.click, (770, 520), 1)
-    image.compare_image(self, 'main_story_skip-story', 5, self.click, (770, 520), 1, True)
+    image.compare_image(self, 'fight_fail', retry=5, cl=(647, 655), rate=1, n=True)
+    image.compare_image(self, 'main_story_continue', retry=5, cl=(505, 520), rate=1)
+    image.compare_image(self, 'main_story_continue', retry=5, cl=(505, 520), rate=1, n=True)
+    image.compare_image(self, 'main_story_skip-story', retry=5, cl=(770, 520), rate=1)
+    image.compare_image(self, 'main_story_skip-story', retry=5, cl=(770, 520), rate=1, n=True)
 
 
 def change_acc_auto(self):
-    image.compare_image(self, 'fight_confirm2', 0.5, self.click, (1163, 658), 1)
-    image.compare_image(self, 'fight_confirm2', 0.5, self.click, (1163, 658), 1, True)
-    image.compare_image(self, 'main_story_skip-story', 5, self.click, (770, 520), 1)
-    image.compare_image(self, 'main_story_skip-story', 5, self.click, (770, 520), 1, True)
+    image.compare_image(self, 'fight_confirm2', threshold=0.5, cl=(1163, 658), rate=1)
+    image.compare_image(self, 'fight_confirm2', threshold=0.5, cl=(1163, 658), rate=1, n=True)
+    image.compare_image(self, 'main_story_skip-story', retry=5, cl=(770, 520), rate=1)
+    image.compare_image(self, 'main_story_skip-story', retry=5, cl=(770, 520), rate=1, n=True)
 
 
 def auto_fight_put_skill(self):
-    image.compare_image(self, 'fight_auto-over', 0.6, self.click, (1082, 599), 2)
+    image.compare_image(self, 'fight_auto-over', threshold=0.6, cl=(1082, 599), rate=2)
     self.click(1123, 545, False)
-    image.compare_image(self, 'fight_auto-over', 0.6, self.click, (1082, 599), 2)
+    image.compare_image(self, 'fight_auto-over', threshold=0.6, cl=(1082, 599), rate=2)
 
     for i in range(100):
         if image.compare_image(self, 'fight_tasking', 0, 0.6):
@@ -370,7 +370,7 @@ def auto_fight_put_skill(self):
 
 
 def auto_fight(self, time_out=20):
-    image.compare_image(self, 'fight_confirm', 0.7, self.click, (1163, 658), 1)
+    image.compare_image(self, 'fight_confirm', threshold=0.7, cl=(1163, 658), rate=1)
     image.compare_image(self, 'fight_tasking', True, wait=1)
     image.compare_image(self, 'fight_tasking', True, wait=time_out)
 

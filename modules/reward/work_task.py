@@ -52,8 +52,8 @@ def get_shop_free_prize(self):
     threshold = 0.7
     locations = np.where(result >= threshold)
     for pt in zip(*locations[::-1]):
-        if image.compare_image(self, 'work_task_daily-prize-ok', 3,
-                               (int(pt[0]) + 45, 489), 0.5):
+        if image.compare_image(self, 'work_task_daily-prize-ok', retry=3,
+                               cl=(int(pt[0]) + 45, 489), threshold=0.5):
             self.click(760, 577)
             stage.close_prize_info(self, True)
             break
@@ -86,7 +86,7 @@ def get_big_month_prize(self):
     get_right_down_prize(self, True)
     possible = {'work_task_big-month-menu': (1245, 40)}
     ends = ('home_setting', 'home_student')
-    image.detect(self, ends, possible, 0.5)
+    image.detect(self, ends, possible, rate=0.5)
 
 
 def start(self):

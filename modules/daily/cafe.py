@@ -216,16 +216,16 @@ def set_fav_sort(self):
     if tp == 'fav_desc' or tp == 'fav_asc':
         if not image.compare_image(self, 'cafe_inv-fav-level', 0):
             for p in fav_sort_position[self.game_server]:
-                self.click(p, False)
+                self.click(*p, False)
                 time.sleep(1)
         n = tp == 'fav_desc'
-        image.compare_image(self, 'cafe_inv-fav-sort', self.click, (814, 151, False), 0.5, n)
+        image.compare_image(self, 'cafe_inv-fav-sort', cl=(814, 151), rate=0.5, n=n)
         return
     if not image.compare_image(self, 'cafe_inv-sel-level', 0):
         for p in selected_sort_position[self.game_server]:
-            self.click(p, False)
+            self.click(*p, False)
             time.sleep(1)
-    image.compare_image(self, 'cafe_inv-fav-sort', self.click, (814, 151, False), 0.5, True)
+    image.compare_image(self, 'cafe_inv-fav-sort', cl=(814, 151), rate=0.5, n=True)
 
 
 def get_cafe_money(self):

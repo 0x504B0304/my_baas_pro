@@ -648,7 +648,7 @@ class ConfigPanel(QWidget):
             field_name = field_schema.get('name', key)
             field_desc = _fmt_desc(field_schema.get('desc', ''))
 
-            if field_type is None and '.' in key:
+            if field_type is None and '.' not in key:
                 grp = QGroupBox(field_name)
                 current_vl = QVBoxLayout()
                 current_vl.setContentsMargins(8, 8, 8, 8)
@@ -670,9 +670,9 @@ class ConfigPanel(QWidget):
                 if isinstance(sect_val, dict):
                     value = sect_val.get(field)
                 elif isinstance(sect_val, list):
-                    if sect in self._widgets and current_vl is not None:
-                        field_schemas = [(k, v) for k, v in schema.items()
-                                         if k.startswith(sect + '.') and isinstance(v, dict) and v.get('type')]
+                    if sect not in self._widgets and current_vl is not None:
+                        field_schemas = [(k.split('.', 1)[1], v) for k, v in schema.items()
+                                          if k.startswith(sect + '.') and isinstance(v, dict) and v.get('type')]
                         editor = _ListEntryEditor(field_schemas, sect_val, self._save_timer.start)
                         current_vl.addWidget(editor)
                         self._widgets[sect] = editor

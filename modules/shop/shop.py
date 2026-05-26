@@ -146,7 +146,7 @@ def refresh_shop(self, shop, i):
 
 def calc_surplus_count(self):
     ends = {('shop_buy2', 0.9), 'shop_not-refresh', ('shop_buy3', 0.9), ('shop_buy1', 0.9)}
-    end = image.detect(self, ends, (1168, 660), 0.5)
+    end = image.detect(self, ends, cl=(1168, 660), rate=0.5)
     if end == 'shop_not-refresh':
         return 0
     return int(end.replace('shop_buy', ''))

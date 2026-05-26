@@ -166,7 +166,7 @@ def do_fight(self, x, y, choose=False):
     image.detect(self, 'normal_task_force-edit', pos)
     if choose:
         stage.choose_role(self, '1')
-    image.compare_image(self, 'fight_force-edit', (1160, 650), 1, True, threshold=1, cl=(1160, 650))
+    image.compare_image(self, 'fight_force-edit', threshold=1, cl=(1160, 650), n=True)
     main_story.auto_fight(self)
     self.logger.info('强制等待5秒...')
     time.sleep(5)

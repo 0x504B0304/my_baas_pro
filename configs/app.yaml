@@ -23,10 +23,10 @@ auto_start: []
 log_show: true
 
 # 界面主题：true = 暗色主题，false = 亮色主题
-dark_theme: false
+dark_theme: true
 
 # 窗口位置和大小（由程序自动维护，请勿手动修改）
-geometry: {x: 3143, y: -572, w: 1199, h: 580}
+geometry: {x: -592, y: -2072, w: 1374, h: 818}
 
 # 关闭窗口行为：null = 每次询问，tray = 隐藏到托盘，quit = 直接退出
 close_action: "quit"
