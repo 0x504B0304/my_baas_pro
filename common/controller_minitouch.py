@@ -68,8 +68,36 @@ class MinitouchController(TouchController):
 
     def connect(self, serial):
         self._serial = serial
+        self._ensure_device_connected()
         self._push_minitouch()
         self._start_minitouch()
+
+    def _ensure_device_connected(self):
+        if ':' in self._serial:
+            self._adb_connect()
+        subprocess.run(
+            [self._adb_path, '-s', self._serial, 'wait-for-device'],
+            capture_output=True, timeout=15
+        )
+
+    def _adb_connect(self):
+        if self.logger:
+            self.logger.info('connecting to network device: %s', self._serial)
+        result = subprocess.run(
+            [self._adb_path, 'connect', self._serial],
+            capture_output=True, timeout=10
+        )
+        stdout = result.stdout.decode(errors='replace').strip()
+        stderr = result.stderr.decode(errors='replace').strip()
+        if self.logger:
+            if stdout:
+                self.logger.info('adb connect: %s', stdout)
+            if stderr:
+                self.logger.warning('adb connect stderr: %s', stderr)
+        if result.returncode != 0:
+            raise RuntimeError(
+                'Failed to connect to network device: {}. '
+                'stderr: {}'.format(self._serial, stderr))
 
     def _adb(self, *args, timeout=10):
         cmd = [self._adb_path, '-s', self._serial] + list(args)
