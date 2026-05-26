@@ -13,15 +13,15 @@ if sys.stderr is None:
     sys.stderr = open(os.devnull, 'w', encoding='utf-8')
 
 
-def _no_window_create_process(args):
-    """Patch _winapi.CreateProcess to add CREATE_NO_WINDOW flag.
-    
-    Prevents console windows from popping up when spawning subprocesses
-    in the frozen (PyInstaller) Windows build.
-    """
-    args = list(args)
-    args[5] = (args[5] or 0) | 0x08000000  # CREATE_NO_WINDOW
-    return _orig_create_process(*args)
+def _no_window_create_process(application_name, command_line, proc_attrs,
+                              thread_attrs, inherit_handles, creation_flags,
+                              env_mapping, current_directory, startup_info):
+    """Patch _winapi.CreateProcess to add CREATE_NO_WINDOW flag."""
+    creation_flags = (creation_flags or 0) | 0x08000000  # CREATE_NO_WINDOW
+    return _orig_create_process(
+        application_name, command_line, proc_attrs, thread_attrs,
+        inherit_handles, creation_flags, env_mapping,
+        current_directory, startup_info)
 
 
 # On Windows frozen builds, patch _winapi to suppress subprocess console windows.

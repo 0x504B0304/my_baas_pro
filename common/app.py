@@ -1,9 +1,16 @@
 import json
 import os
+import sys
 
 import yaml
 
-from launcher import resource_path
+
+def _resource_path(relative_path):
+    if hasattr(sys, 'frozen'):
+        base = os.path.dirname(sys.executable)
+    else:
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, relative_path)
 
 version = 'v6.0.0.1'
 
@@ -44,7 +51,7 @@ _YAML_TEMPLATE = (
 
 
 def _app_file() -> str:
-    return resource_path('configs/app.yaml')
+    return _resource_path('configs/app.yaml')
 
 
 def _read_app_data() -> dict:

@@ -55,8 +55,6 @@ class Main:
         self.processes = {}
 
     def start_process(self, con):
-        if os.name == 'nt' and getattr(sys, 'frozen', False) and not _is_admin():
-            raise PermissionError('请以管理员身份运行程序')
         if encrypt.md5(con) in self.processes and self.processes[encrypt.md5(con)].is_alive():
             return None
         if encrypt.md5(con) in processes_task:
