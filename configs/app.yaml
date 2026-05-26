@@ -26,7 +26,7 @@ log_show: true
 dark_theme: false
 
 # 窗口位置和大小（由程序自动维护，请勿手动修改）
-geometry: {x: -880, y: -1503, w: 1280, h: 800}
+geometry: {x: 3296, y: -715, w: 960, h: 600}
 
 # 关闭窗口行为：null = 每次询问，tray = 隐藏到托盘，quit = 直接退出
-close_action: null
+close_action: "quit"

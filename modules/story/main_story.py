@@ -181,7 +181,7 @@ def to_main_story(self):
         'main_story_choose-plot': (56, 38),
     }
     ends = (('main_story_menu1', 0.9),)
-    home.to_menu(self, ends, pos, 1)
+    home.to_menu(self, ends, pos, rate=1)
 
 
 def to_choose_story(self):

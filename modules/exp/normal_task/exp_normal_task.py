@@ -145,7 +145,7 @@ def start_fight(self, region, gk=None):
             if n == 'sleep':
                 time.sleep(p)
             elif 'swipe' in n:
-                self.d.swipe(p, duration=0.1)
+                self.swipe(p[0], p[1], p[2], p[3], duration=0.1)
                 time.sleep(0.5)
             else:
                 start_choose_team(self, gk, n)
@@ -430,7 +430,7 @@ def choose_yushe_and_start_action(self, team_name):
     self.click(1200, 183)
     time.sleep(1)
     self.click(1200, 183)
-    self.d.press('back')
+    self.press('back')
     time.sleep(1)
     image.compare_image(self, 'fight_team-lock', (1120, 500))
     return
@@ -449,9 +449,9 @@ def start_bonus_team(self, gk):
     self.logger.warning('当前使用加成队伍：{0}'.format(gk))
     auto_choose(self)
     time.sleep(1)
-    self.d.click(1140, 670)
+    self.click(1140, 670, False)
     time.sleep(1)
-    self.d.click(1140, 670)
+    self.click(1140, 670, False)
     image.compare_image(self, 'cm_team-stop', 0.95, self.click, (1040, 667), 1, True)
     time.sleep(0.3)
     image.detect(self, 'cm_bonus-start', {}, (1200, 660))

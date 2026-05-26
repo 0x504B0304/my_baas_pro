@@ -18,6 +18,7 @@ from uiautomator2 import Device
 
 from common import stage, process, config, log, encrypt, limit, device
 from common.config import get_froze_path
+from common.controller_scale import ScaleProxy
 
 from modules.activity import (
     god_cross, cn_activity, cn_jmjh,
@@ -261,20 +262,23 @@ class Baas:
     def click(self, x, y, wait=True, count=1, rate=0):
         if wait:
             stage.wait_loading(self)
+        dx, dy = self.scale_proxy.to_device(x, y)
         for i in range(count):
             self.logger.info('click (%s,%s)', x, y)
             if rate > 0:
                 time.sleep(rate)
-            self.d.click(x, y)
+            self.d.click(dx, dy)
 
-    def get_screenshot_array(self):
+    def get_screenshot_array(self, raw=False):
         img = cv2.cvtColor(
             np.array(self.d.screenshot()), cv2.COLOR_RGB2BGR
         )
         h, w = img.shape[:2]
         if h > w:
             img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-        return img
+        if raw:
+            return img
+        return self.scale_proxy.resize_screenshot(img)
 
     def click_condition(self, x, y, cond, fn, fn_args, wait=True, rate=0):
         if wait:
@@ -287,15 +291,27 @@ class Baas:
     def double_click(self, x, y, wait=True, count=1, rate=0):
         if wait:
             stage.wait_loading(self)
+        dx, dy = self.scale_proxy.to_device(x, y)
         for i in range(count):
             self.logger.info('double_click (%s,%s)', x, y)
             if rate > 0:
                 time.sleep(rate)
-            self.d.double_click(x, y)
+            self.d.double_click(dx, dy)
 
     def swipe(self, fx, fy, tx, ty, duration=None):
         self.logger.info('swipe %s %s %s %s duration:%s', fx, fy, tx, ty, duration)
-        self.d.swipe(fx, fy, tx, ty, duration=duration)
+        dfx, dfy = self.scale_proxy.to_device(fx, fy)
+        dtx, dty = self.scale_proxy.to_device(tx, ty)
+        self.d.swipe(dfx, dfy, dtx, dty, duration=duration)
+
+    def long_click(self, x, y, duration=2):
+        self.logger.info('long_click (%s,%s) duration:%s', x, y, duration)
+        dx, dy = self.scale_proxy.to_device(x, y)
+        self.d.long_click(dx, dy, duration)
+
+    def press(self, key):
+        self.logger.info('press %s', key)
+        self.d.press(key)
 
     def exit(self, msg):
         if msg != '':
@@ -422,7 +438,7 @@ class Baas:
         for ba_task, con in self.bc.items():
             if ba_task == 'baas':
                 continue
-            if con['base']['next'] == '':
+            if con['base']['next'] == '' or con['base']['next'] is None:
                 con['base']['next'] = datetime.now().strftime('%Y-%m-%d 00:00:00')
             try:
                 next_time = datetime.strptime(con['base']['next'], '%Y-%m-%d %H:%M:%S')
@@ -430,7 +446,10 @@ class Baas:
                 next_time = datetime.now() - timedelta(days=1)
                 con['base']['next'] = datetime.now().strftime('%Y-%m-%d 00:00:00')
             try:
-                end_time = datetime.strptime(con['base']['end'], '%Y-%m-%d %H:%M:%S')
+                if con['base']['end'] is None:
+                    con['base']['end'] = ''
+                else:
+                    end_time = datetime.strptime(con['base']['end'], '%Y-%m-%d %H:%M:%S')
             except ValueError:
                 end_time = datetime.now() + timedelta(days=1)
                 con['base']['end'] = ''

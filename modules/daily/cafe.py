@@ -88,8 +88,8 @@ def drag_gift_click_girl(self):
         to_gift(self)
         t1 = threading.Thread(target=shot, args=(self,))
         t1.start()
-        self.d.click(131, 660)
-        self.d.swipe(131, 660, 1280, 660, duration=0.5)
+        self.click(131, 660, False)
+        self.swipe(131, 660, 1280, 660, duration=0.5)
         t1.join()
         res = match(self, self.latest_img_array)
         result_list = list(set((int(x), min(int(y), 591)) for x, y in res))
@@ -168,7 +168,6 @@ def confirm_load_preset(self):
 
 
 def init_window(self):
-    self.d().pinch_in()
     self.swipe(392, 564, 983, 82)
 
 
@@ -252,11 +251,11 @@ def click_girl_plus(self, i):
     else:
         self.swipe(1008, 516, 300, 150)
     time.sleep(0.5)
-    before = self.d.screenshot()
+    before = self.get_screenshot_array()
     time.sleep(1)
-    after = self.d.screenshot()
-    img1_data = np.array(before)
-    img2_data = np.array(after)
+    after = self.get_screenshot_array()
+    img1_data = before
+    img2_data = after
     diff_pixels_coords = np.where(img1_data != img2_data)
     blocks = defaultdict(list)
     for p in zip(*diff_pixels_coords):

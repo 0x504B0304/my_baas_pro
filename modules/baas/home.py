@@ -3,7 +3,7 @@ from modules.baas import restart
 
 
 def back_home(self):
-    self.d.press('home')
+    self.press('home')
 
 
 def only_start(self):

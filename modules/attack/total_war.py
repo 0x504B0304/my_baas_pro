@@ -180,7 +180,7 @@ def start_scan(self):
     if image.compare_image(self, 'total_war_can-scan', retry=1):
         self.double_click(1073, 303, False)
         self.double_click(1073, 303, False)
-        self.d.long_click(1073, 303, 2)
+        self.long_click(1073, 303, 2)
         image.compare_image(self, 'total_war_join-notice', cl=(855, 395), rate=1, retry=20)
         image.compare_image(self, 'total_war_join-notice', cl=(770, 500), rate=1, n=True, retry=20)
         stage.start_scan(self)

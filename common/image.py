@@ -77,7 +77,10 @@ def compare_image(self, name, retry=999, threshold=0.7, nl=False,
     height2, width2 = res_img.shape[:2]
 
     if width1 != width2 or height1 != height2:
-        self.exit(f"Image dimensions do not match (get {width1}x{height1} => target {width2}x{height2}) name:{name}")
+        self.logger.warning(
+            f"Image dimensions mismatch (get {width1}x{height1} => target {width2}x{height2}) name:{name}, auto-resizing screenshot crop"
+        )
+        ss_img = cv2.resize(ss_img, (width2, height2), interpolation=cv2.INTER_AREA)
 
     compare = compare_image_data(self, ss_img, res_img, threshold, name, n, i)
 

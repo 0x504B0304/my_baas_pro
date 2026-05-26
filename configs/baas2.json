@@ -1,8 +1,8 @@
 {
     "baas": {
         "base": {
-            "package": "com.nexon.bluearchive",
-            "serial": "127.0.0.1:16385",
+            "package": "com.RoamingStar.BlueArchive.bilibili",
+            "serial": "192.168.10.6:5555",
             "ss_rate": 0.1,
             "error_restart_game": true
         },
@@ -40,7 +40,7 @@
         "base": {
             "enable": true,
             "index": -999,
-            "next": "2025-02-05 22:58:39",
+            "next": "2026-05-26 15:12:22",
             "end": "",
             "interval": 3600,
             "link_task": "",
@@ -54,7 +54,7 @@
     },
     "shop": {
         "base": {
-            "enable": true,
+            "enable": false,
             "index": 10,
             "next": "2025-02-06 05:00:00",
             "end": "",
@@ -97,7 +97,7 @@
         "base": {
             "enable": true,
             "index": 20,
-            "next": "2025-02-05 22:58:18",
+            "next": "2026-05-26 15:23:47",
             "end": "",
             "interval": 3600,
             "link_task": "",
@@ -115,7 +115,7 @@
         "base": {
             "enable": true,
             "index": 30,
-            "next": "2025-02-06 05:00:00",
+            "next": "2026-05-27 05:00:00",
             "end": "",
             "interval": 0,
             "link_task": "",
@@ -140,7 +140,7 @@
         "base": {
             "enable": true,
             "index": 40,
-            "next": "2025-02-06 05:00:00",
+            "next": "2026-05-27 05:00:00",
             "end": "",
             "interval": 0,
             "link_task": "",
@@ -222,10 +222,10 @@
     },
     "main_story": {
         "base": {
-            "enable": true,
+            "enable": false,
             "index": 65,
-            "next": "2025-02-05 22:46:35",
-            "end": "",
+            "next": null,
+            "end": null,
             "interval": 3600,
             "link_task": "",
             "text": "主线故事"
@@ -417,7 +417,7 @@
     },
     "exp_hard_task": {
         "base": {
-            "enable": true,
+            "enable": false,
             "index": -99,
             "next": "2023-11-17 00:00:00",
             "end": "",

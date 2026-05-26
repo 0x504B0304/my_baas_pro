@@ -44,7 +44,7 @@ def check_running(self, retry):
                 self.con), '配置：{0}'.format(self.con))
         raise RestartTaskException('游戏闪退，重启任务')
 
-    atx_retry = 100
+    atx_retry = 500
     task_retry = 200
     if hasattr(self, 'tc') and self.tc['task'] == 'total_war':
         atx_retry += 200
