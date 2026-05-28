@@ -162,6 +162,20 @@ a = Analysis(
         'modules.exp.normal_task.stage_data',
     ],
 
+    # --- 排除不需要的模块 (减小打包体积) ---
+    # 这些包在运行时已被 common/baas.py 中的 mock 阻止导入：
+    #   - cnstd.yolov7.plots → matplotlib (已 mock)
+    #   - cnstd.hf_downloader → huggingface_hub (已 mock)
+    excludes=[
+        'matplotlib',
+        'huggingface_hub',
+        'httpx',           # huggingface_hub 依赖
+        'httpcore',        # httpx 依赖
+        'h11',             # httpcore 依赖
+        'anyio',           # httpx 依赖
+        'rich',            # huggingface_hub 可选依赖
+    ],
+
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

@@ -11,6 +11,31 @@ from datetime import datetime, timedelta
 
 import cv2
 import numpy as np
+
+# ---------------------------------------------------------------------------
+# 阻止 cnstd.yolov7.plots 加载 matplotlib：
+#   cnstd.yolov7.common 顶层有 from .plots import color_list, plot_one_box
+#   导致 plots.py 被导入 → import matplotlib → 80+ 子模块加载（~3 秒）。
+#   BAAS 只用 cnocr 做文字识别，从不调用这两个函数，预注册假模块跳过即可。
+# ---------------------------------------------------------------------------
+_MOCK_PLOTS = type(sys)('cnstd.yolov7.plots')
+_MOCK_PLOTS.color_list = staticmethod(lambda: [])
+_MOCK_PLOTS.plot_one_box = staticmethod(lambda *a, **kw: None)
+sys.modules.setdefault('cnstd.yolov7.plots', _MOCK_PLOTS)
+
+# ---------------------------------------------------------------------------
+# 阻止 cnstd.hf_downloader 加载 huggingface_hub：
+#   cnstd.hf_downloader 有 from huggingface_hub import snapshot_download
+#   用于从 HuggingFace 下载预训练模型。BAAS 模型在本地 web/static/ocr/，
+#   永不触发远程下载。mock snapshot_download = None 可省 ~1.1s 及其所有
+#   网络依赖（httpx/requests/rich/urllib3/httpcore/h11/anyio 等）。
+# ---------------------------------------------------------------------------
+_HF_MOCK = type(sys)('huggingface_hub')
+_HF_MOCK.snapshot_download = None
+_HF_MOCK.hf_hub_download = None
+sys.modules.setdefault('huggingface_hub', _HF_MOCK)
+# ---------------------------------------------------------------------------
+
 from cnocr import CnOcr
 
 from common import stage, process, config, log, encrypt, limit
