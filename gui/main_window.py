@@ -1,5 +1,6 @@
 import ctypes
 import ctypes.wintypes
+import threading
 
 from PySide6.QtCore import Qt, QObject, QEvent, QPoint, Signal, QSize, QTimer
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QPainterPath, QColor
@@ -13,6 +14,7 @@ from gui.dashboard_widget import DashboardWidget
 from gui.home_widget import HomeWidget
 from gui.styles import LIGHT_STYLE, DARK_STYLE
 from gui.release_dialog import show_release
+from modules.baas import bemfa
 
 _SIDEBAR_DEFAULT = 240
 _BORDER = 6
@@ -369,6 +371,13 @@ class MainWindow(QMainWindow):
             except PermissionError:
                 pass
 
+        # 在后台线程启动巴法云远程控制（避免阻塞 Qt 事件循环）
+        threading.Thread(
+            target=self._init_bemfa,
+            daemon=True,
+            name='bemfa-init'
+        ).start()
+
         target = auto_start[0] if auto_start else self._sidebar.first_account()
         if target:
             self._show_dashboard(target)
@@ -376,6 +385,13 @@ class MainWindow(QMainWindow):
             self._title_bar.set_breadcrumb(f'{target}  /  总览')
         else:
             self._sidebar.select_home()
+
+    def _init_bemfa(self):
+        """后台线程：初始化巴法云管理器（不阻塞 UI）。"""
+        try:
+            bemfa.init_manager()
+        except Exception:
+            pass
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -444,6 +460,11 @@ class MainWindow(QMainWindow):
 
     def _on_configs_changed(self):
         self._sidebar.refresh_accounts()
+        # 配置变更后刷新巴法云连接映射
+        try:
+            bemfa.reload_manager()
+        except Exception:
+            pass
 
     def moveEvent(self, event):
         super().moveEvent(event)
@@ -570,6 +591,13 @@ class MainWindow(QMainWindow):
     def _do_close(self):
         self._dashboard.stop()
         self._sidebar._timer.stop()
+
+        # 停止巴法云远程控制
+        try:
+            bemfa.shutdown_manager()
+        except Exception:
+            pass
+
         if not self.isMaximized():
             geo = self.geometry()
             app_module.save_geometry(geo.x(), geo.y(), geo.width(), geo.height())

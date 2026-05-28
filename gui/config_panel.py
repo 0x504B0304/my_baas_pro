@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from common import config
+from modules.baas import bemfa
 
 _CTRL_W = 345
 _TIME_RE = re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$')
@@ -927,6 +928,7 @@ class ConfigPanel(QWidget):
                 data[self._fn] = new_data
                 config.save_ba_config(self._con, data)
                 self._show_toast()
+                bemfa.reload_manager()
             except Exception:
                 pass
             return
@@ -959,5 +961,6 @@ class ConfigPanel(QWidget):
         try:
             config.save_ba_config(self._con, data)
             self._show_toast()
+            bemfa.reload_manager()
         except Exception:
             pass

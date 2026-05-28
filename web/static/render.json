@@ -96,6 +96,24 @@
                 "notify.failure": {
                         "name": "任务执行失败是否发送推送",
                         "type": "bool"
+                },
+                "bemfa": {
+                        "name": "巴法云远程控制"
+                },
+                "bemfa.enable": {
+                        "name": "启用该功能",
+                        "desc": "通过巴法云TCP长连接远程控制脚本启停。需先到 <a href='https://cloud.bemfa.com'>bemfa.com</a> 注册设备，在控制台获取UID和Topic。\n收到 \"on\" 消息时启动脚本，收到 \"off\" 消息时停止脚本。",
+                        "type": "bool"
+                },
+                "bemfa.uid": {
+                        "name": "巴法云UID",
+                        "desc": "巴法云用户UID，在巴法云控制台 -> 设备管理 中获取",
+                        "type": "txt"
+                },
+                "bemfa.topic": {
+                        "name": "巴法云Topic",
+                        "desc": "订阅的主题名称。在巴法云控制台创建主题后，向该主题发送 on/off 即可远程控制",
+                        "type": "txt"
                 }
         },
         "restart": {

@@ -15,6 +15,11 @@
             "finish_single" : true,
             "finish_all" : true,
             "failure" : true
+        },
+        "bemfa" : {
+            "enable" : false,
+            "uid" : "",
+            "topic" : ""
         }
     },
     "restart" : {
