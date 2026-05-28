@@ -436,16 +436,19 @@ class Baas:
                 con['base']['text'] = '日服-通用活动'
             if ba_task == 'intl_activity':
                 con['base']['text'] = '国际服-通用活动'
-            if con['base']['next'] == '':
+            if not con['base']['next'] or con['base']['next'] == '':
                 con['base']['next'] = datetime.now().strftime('%Y-%m-%d 00:00:00')
             try:
                 next_time = datetime.strptime(con['base']['next'], '%Y-%m-%d %H:%M:%S')
-            except ValueError:
+            except (ValueError, TypeError):
                 next_time = datetime.now() - timedelta(days=1)
                 con['base']['next'] = datetime.now().strftime('%Y-%m-%d 00:00:00')
             try:
-                end_time = datetime.strptime(con['base']['end'], '%Y-%m-%d %H:%M:%S')
-            except ValueError:
+                if con['base']['end'] and con['base']['end'] != '':
+                    end_time = datetime.strptime(con['base']['end'], '%Y-%m-%d %H:%M:%S')
+                else:
+                    raise ValueError
+            except (ValueError, TypeError):
                 end_time = datetime.now() + timedelta(days=1)
                 con['base']['end'] = ''
             task = {

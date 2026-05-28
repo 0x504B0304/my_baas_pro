@@ -159,8 +159,8 @@ def stage_convert(stage_list):
 
 def screen_swipe(self, stage=1, threshold1=0, threshold2=999, reset=True, f=(911, 650, 911, 40, 0.55)):
     if reset:
-        self.swipe(911, 199, 911, 600, 0.1)
-        self.swipe(911, 199, 911, 600, 0.1)
+        self.swipe(911, 199, 911, 600, 0.5)
+        self.swipe(911, 199, 911, 600, 0.5)
     if stage > threshold1:
         time.sleep(0.5)
         self.swipe(*f)

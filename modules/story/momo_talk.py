@@ -47,7 +47,7 @@ def set_unread_sort(self):
     if not image.compare_image(self, 'momo_talk_sort-field', 0):
         position = sd[self.game_server]
         for p in position:
-            self.click(p)
+            self.click(*p)
             time.sleep(1)
 
 
@@ -94,7 +94,7 @@ def check_message(self):
     :return:
     """
     cu_ss = image.screenshot_cut(self, (769, 181, 807, 620))
-    if hasattr(self, 'mm_prev') and image.compare_image_data(self, cu_ss, self.mm_prev):
+    if hasattr(self, 'mm_prev') and image.compare_image_data(self, cu_ss, self.mm_prev, n=True):
         pass
     else:
         self.mm_i += 1

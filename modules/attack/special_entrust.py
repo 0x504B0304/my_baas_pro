@@ -106,7 +106,7 @@ def to_wanted(self):
         'wanted_stage-list': (60, 40),
         'wanted_help': (1013, 130),
     }
-    home.to_menu(self, 'wanted_menu', pos)
+    home.to_menu(self, 'wanted_menu', pos, rate=0.5)
 
 
 def to_special(self):
@@ -121,7 +121,7 @@ def to_special(self):
         'normal_task_task-info-window': (60, 40),
         'wanted_stage-list': (60, 40),
     }
-    home.to_menu(self, 'special_entrust_menu', pos)
+    home.to_menu(self, 'special_entrust_menu', pos, rate=0.5)
 
 
 def start(self):

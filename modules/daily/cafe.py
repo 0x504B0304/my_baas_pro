@@ -170,7 +170,7 @@ def confirm_load_preset(self):
 def init_window(self):
     self.pinch_in(640, 360, 300, 0.5)
     time.sleep(0.5)
-    self.swipe(392, 564, 983, 82)
+    self.swipe(392, 564, 983, 82, 1)
 
 
 def to_invitation_ticket(self):
