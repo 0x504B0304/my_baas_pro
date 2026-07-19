@@ -49,7 +49,7 @@ def show_and_hide(self, name, show_cl, hide_cl, rate=None, retry=999):
 
 def compare_image(self, name, retry=999, threshold=0.7, nl=False,
                   mis_fu=None, mis_argv=None, rate=None, n=False,
-                  box=None, ss=None, cl=None, i=1):
+                  box=None, ss=None, cl=None, i=1, wait=None):
     """
     对图片坐标内的图片和资源图片是否匹配
     @param self:
@@ -57,6 +57,9 @@ def compare_image(self, name, retry=999, threshold=0.7, nl=False,
     @param retry: 重试次数
     @param threshold: 匹配程度1为
     """
+    if wait is not None:
+        retry = wait
+
     if rate is None:
         rate = self.bc['baas']['base']['ss_rate']
 
@@ -67,6 +70,9 @@ def compare_image(self, name, retry=999, threshold=0.7, nl=False,
         box = get_box(self, name)
 
     ss_img = screenshot_cut(self, box, 0, False, ss=ss)
+
+    if name != 'cm_auth-timeout':
+        handle_global_popup(self, ss if ss is not None else self.latest_img_array)
 
     res_img = get_img_data(self, name)
 
@@ -127,7 +133,43 @@ def compare_image_data(self, ss_img, res_img, threshold=0.7, name='', n=False, i
     return compare
 
 
+def compare_image_once(self, name, ss, threshold=0.7):
+    box = get_box(self, name)
+    ss_img = screenshot_cut(self, box, 0, False, ss=ss)
+    res_img = get_img_data(self, name)
+    if type(res_img) == bool:
+        return False
+    height1, width1 = ss_img.shape[:2]
+    height2, width2 = res_img.shape[:2]
+    if width1 != width2 or height1 != height2:
+        ss_img = cv2.resize(ss_img, (width2, height2), interpolation=cv2.INTER_AREA)
+    return compare_image_data(self, ss_img, res_img, threshold, name)
+
+
+def handle_global_popup(self, ss=None):
+    if ss is None:
+        ss = self.get_screenshot_array()
+    if self.game_server == 'cn' and compare_image_once(self, 'cm_auth-timeout', ss, 0.7):
+        self.logger.warning('检测到登录会话超时弹窗，确认后重启当前任务')
+        self.click(640, 505, False)
+        time.sleep(3)
+        raise restart.RestartTaskException('登录会话超时，重新执行当前任务')
+    return False
+
+
 def detect(self, end, possibles=None, cl=None, pre_func=None, pre_argv=None, retry=999, rate=None):
+    if isinstance(possibles, int) and not isinstance(possibles, bool):
+        retry = possibles
+        possibles = None
+
+    if cl is not None and not (isinstance(cl, (tuple, list)) and len(cl) >= 2):
+        if isinstance(pre_func, int) and not isinstance(pre_func, bool):
+            retry = pre_func
+            pre_func = None
+        elif retry == 999 and isinstance(cl, int) and not isinstance(cl, bool):
+            retry = cl
+        cl = None
+
     """
     图片探索 执行对应事件
     @param self:

@@ -137,7 +137,7 @@ def start_fight(self, region, gk=None):
         image.compare_image(self, end)
         image.compare_image(self, end, threshold=0.6, cl=(1171, 670), rate=1, n=True)
     else:
-        if gk in self.stage_data:
+        if gk not in self.stage_data:
             self.logger.critical('本关卡{0}尚未支持开图，正在全力研发中...'.format(gk))
             return
         starts = get_gk_data(gk, self.stage_data, 'start')
@@ -148,7 +148,7 @@ def start_fight(self, region, gk=None):
                 self.swipe(p[0], p[1], p[2], p[3], duration=0.1)
                 time.sleep(0.5)
             else:
-                start_choose_team(self, gk, n)
+                start_choose_team(self, gk, n, p)
         start_mission(self)
         action = check_skip_auto_over(self)
         start_action(self, gk, self.stage_data, action)
@@ -374,12 +374,12 @@ def start_action(self, gk, stage_data, attr='action'):
             to_tart_task_page(self)
 
     self.logger.warning('行动结束,等待进入Boss战斗...')
-    image.compare_image(self, 'fight_tasking', True, 1)
+    image.compare_image(self, 'fight_tasking', retry=1)
 
 
 def fight_to_fight_menu(self, is_click=True):
     self.logger.warning('开始进入道中战斗...')
-    image.compare_image(self, 'fight_tasking', True, 1)
+    image.compare_image(self, 'fight_tasking', retry=1)
     stage.wait_loading(self)
     if is_click:
         time.sleep(5)
@@ -401,20 +401,28 @@ def click_and_not_move(self, show_cl):
 
 
 def get_gk_data(gk, stage_data, attr):
-    return stage_data[gk][attr]
+    return get_gk_entry(gk, stage_data)[attr]
 
 
-def start_choose_team(self, gk, n):
+def get_gk_entry(gk, stage_data):
+    data = stage_data[gk]
+    while isinstance(data, str):
+        data = stage_data[data]
+    return data
+
+
+def start_choose_team(self, gk, n, start_position=None):
     stage_data = self.stage_data
-    for team_name in stage_data[gk][n]:
+    team_names = get_gk_entry(gk, stage_data).get(n, [n])
+    for team_name in team_names:
         if team_name == 'bonus':
-            start_bonus_team(self, gk)
+            start_bonus_team(self, gk, start_position)
         elif team_name == 'side':
             start_choose_side_team(self)
-        elif team_name[0] == '@':
+        elif isinstance(team_name, str) and team_name[0] == '@':
             start_choose_team_yushe(self, team_name)
         else:
-            choose_team_and_start_action(self, team_name)
+            choose_team_and_start_action(self, team_name, start_position)
 
 
 def start_choose_team_yushe(self, team_name):
@@ -436,34 +444,21 @@ def choose_yushe_and_start_action(self, team_name):
     return
 
 
-def choose_team_and_start_action(self, team_name):
+def choose_team_and_start_action(self, team_name, start_position=None):
     self.logger.info('当前使用队伍：{0}'.format(team_name))
-    pos = image.get_box(self, 'cm_team-stop')
-    self.click(pos[0], pos[1])
-    image.compare_image(self, 'fight_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
-    image.compare_image(self, 'cm_team-ok', True, 10)
-    stage.wait_loading(self)
+    if start_position is None:
+        start_mission(self)
+        return
+    deploy_team_to_start(self, start_position, team_name)
 
 
-def start_bonus_team(self, gk):
+def start_bonus_team(self, gk, start_position=None):
     self.logger.warning('当前使用加成队伍：{0}'.format(gk))
+    if start_position is not None:
+        deploy_team_to_start(self, start_position)
+        return
     auto_choose(self)
-    time.sleep(1)
-    self.click(1140, 670, False)
-    time.sleep(1)
-    self.click(1140, 670, False)
-    image.compare_image(self, 'cm_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
-    time.sleep(0.3)
-    image.detect(self, 'cm_bonus-start', {}, (1200, 660))
-    time.sleep(0.3)
-    image.detect(self, 'cm_bonus-start', {}, (1200, 680))
-    time.sleep(0.3)
-    self.click(770, 500)
-    image.compare_image(self, 'fight_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
-    time.sleep(1)
-    self.click(770, 500)
-    image.compare_image(self, 'cm_team-ok', True, 10)
-    stage.wait_loading(self)
+    start_mission(self)
 
 
 def start_bonus_single_intl(self, gk):
@@ -479,14 +474,10 @@ def start_bonus_single_intl(self, gk):
 
 def start_bonus_single(self, gk):
     self.logger.warning('当前使用加成队伍：{0}'.format(gk))
-    pos = image.get_box(self, 'cm_team-stop')
-    self.click(pos[0], pos[1])
-    image.compare_image(self, 'fight_team-stop', threshold=0.95, cl=(1040, 667), rate=1, n=True)
-    image.compare_image(self, 'cm_team-ok', True, 10)
-    stage.wait_loading(self)
+    start_mission(self)
 
 
-def choose_bonus_and_start_action(self, team_name):
+def choose_bonus_and_start_action(self, team_name, bonus_index=None):
     self.logger.info('当前使用加成队伍：{0}'.format(team_name))
     image.compare_image(self, 'cm_bonus-tzbd', cl=(1140, 670))
     stage.wait_loading(self)
@@ -497,8 +488,9 @@ def start_choose_side_team(self):
     self.click(640, 500)
 
 
-def select_force_fight(self):
-    for pos in force_position.values():
+def select_force_fight(self, index=None):
+    positions = [force_position[index]] if index in force_position else force_position.values()
+    for pos in positions:
         self.click(*pos)
         time.sleep(0.5)
         self.click(640, 500)
@@ -513,3 +505,85 @@ def wait_over(self):
 def start_mission(self):
     self.click(1200, 660)
     stage.wait_loading(self)
+
+
+def deploy_team_to_start(self, start_position, team_name=None):
+    for target in resolve_start_positions(self, start_position):
+        self.click(*target)
+        time.sleep(0.5)
+
+        if self.game_server != 'cn':
+            self.click(1175, 655)
+            time.sleep(2)
+            wait_tactical_map_ready(self)
+            return
+
+        if image.compare_image(self, 'fight_team-undeploy', retry=3, threshold=0.85):
+            self.press('back')
+            time.sleep(1)
+            wait_tactical_map_ready(self)
+            continue
+
+        if image.compare_image(self, 'fight_team-deploy', retry=10, threshold=0.85, rate=0.5):
+            image.compare_image(self, 'fight_team-deploy', retry=20, threshold=0.85,
+                                cl=(1175, 655), rate=0.5, n=True)
+            wait_tactical_map_ready(self)
+            return
+
+        wait_tactical_map_ready(self)
+
+
+def resolve_start_positions(self, start_position):
+    if self.game_server != 'cn':
+        return [start_position]
+
+    ss = self.get_screenshot_array()
+    candidates = find_start_cells(self, ss)
+    if not candidates:
+        return [start_position]
+
+    sx, sy = start_position
+    ordered = sorted(candidates, key=lambda p: (p[0] - sx) ** 2 + (p[1] - sy) ** 2)
+    nearby = [
+        p for p in ordered
+        if (p[0] - sx) ** 2 + (p[1] - sy) ** 2 <= 260 ** 2
+    ]
+    if nearby:
+        self.logger.info('start position candidates for %s: %s', start_position, nearby)
+        return nearby
+    return [start_position]
+
+
+def wait_tactical_map_ready(self, retry=40):
+    if self.game_server != 'cn':
+        stage.wait_loading(self)
+        return
+
+    for _ in range(retry):
+        stage.wait_loading(self)
+        ss = self.get_screenshot_array()
+        if find_start_cells(self, ss):
+            return
+        time.sleep(0.5)
+
+
+def find_start_cells(self, ss=None, threshold=0.7):
+    if ss is None:
+        ss = self.get_screenshot_array()
+    template = image.get_img_data(self, 'fight_start-cell')
+    if type(template) == bool:
+        return []
+
+    result = cv2.matchTemplate(ss, template, cv2.TM_CCOEFF_NORMED)
+    locations = np.where(result >= threshold)
+    candidates = []
+    for pt in zip(*locations[::-1]):
+        center = (
+            int(pt[0] + template.shape[1] / 2),
+            int(pt[1] + template.shape[0] / 2),
+        )
+        if any(abs(center[0] - p[0]) < 10 and abs(center[1] - p[1]) < 10
+               for p in candidates):
+            continue
+        candidates.append(center)
+    return candidates

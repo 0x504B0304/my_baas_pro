@@ -60,12 +60,14 @@ def start(self):
 
 
 def empty_make(self):
-    ends = ('cm_get-prize', 'make_receive', 'make_immediately', 'make_start-make')
+    ends = ('cm_get-prize', 'make_receive', 'make_immediately', 'make_start-make', 'make_workshop')
     end = image.detect(self, ends, None)
     if end == 'make_receive':
         receive_prize(self)
     elif end == 'make_immediately':
         return make_immediately(self)
+    elif end == 'make_workshop':
+        return False
     return True
 
 

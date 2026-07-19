@@ -246,7 +246,7 @@ def start_admission(self, chapter):
     if image.compare_image(self, 'main_story_first-lock', 5, 0.6, 0.5):
         cl = (1110, 355)
 
-    if not image.compare_image(self, 'main_story_plot-info', cl, 1, 5):
+    if not image.compare_image(self, 'main_story_plot-info', retry=5, cl=cl):
         home.click_house_under(self)
         return start_admission(self, chapter)
 
@@ -297,7 +297,7 @@ def start_admission(self, chapter):
             gk = 'F-{0}-{1}'.format(chapter, stage_index)
             self.stage_data = stage_data
 
-            if gk in stage_data:
+            if gk not in stage_data:
                 self.logger.critical('当前关卡（{0}）卡暂不支持开图，请联系奇犽揍敌客x'.format(gk))
                 self.exit(0)
 
@@ -371,8 +371,8 @@ def auto_fight_put_skill(self):
 
 def auto_fight(self, time_out=20):
     image.compare_image(self, 'fight_confirm', threshold=0.7, cl=(1163, 658), rate=1)
-    image.compare_image(self, 'fight_tasking', True, wait=1)
-    image.compare_image(self, 'fight_tasking', True, wait=time_out)
+    image.compare_image(self, 'fight_tasking', retry=1)
+    image.compare_image(self, 'fight_tasking', retry=time_out, n=True)
 
 
 def start_story(self):

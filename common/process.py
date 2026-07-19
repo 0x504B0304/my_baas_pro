@@ -5,7 +5,6 @@ import traceback
 from multiprocessing import Process
 
 from common import log, encrypt, limit
-from common.baas import Baas
 from modules.baas import restart
 
 
@@ -17,6 +16,8 @@ def _is_admin() -> bool:
 
 
 def baas_dashboard(con, pt, source, log_enabled):
+    from common.baas import Baas
+
     log._log_enabled = log_enabled
     b = None
     restart.source = source

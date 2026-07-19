@@ -112,7 +112,7 @@ def to_wanted(self):
 def to_special(self):
     spe_pos = {
         'jp': (723, 450),
-        'cn': (730, 537),
+        'cn': (720, 494),
         'intl': (730, 537),
     }
     pos = {
@@ -148,7 +148,8 @@ def choose_entrust(self, position, max_count):
                 time.sleep(0.1)
                 stage.screen_swipe(self, tk['stage'], 6, 11, False, f=(911, 650, 911, 200, 0.55))
         else:
-            stage.screen_swipe(self, tk['stage'], 6, 99, f=(911, 650, 911, 40, 0.1))
+            threshold2 = 12 if self.tc['task'] == 'special_entrust' else 99
+            stage.screen_swipe(self, tk['stage'], 6, threshold2, f=(911, 650, 911, 40, 0.1))
 
         self.click(*get_lv_position(self, tk['stage']))
 

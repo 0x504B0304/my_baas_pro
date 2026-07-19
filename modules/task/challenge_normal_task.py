@@ -28,13 +28,13 @@ def start(self):
         self.logger.error('开始执行普通开图:{0}'.format(gk))
         region, lv = task.split('-')
         self.stage_data = exp_normal_task.get_stage_data(self, region)
-        if gk in self.stage_data:
+        if gk not in self.stage_data:
             self.logger.critical('本关卡{0}尚未支持挑战任务，正在全力研发中...'.format(gk))
             continue
         normal_task.choose_region(self, int(region))
-        stage.screen_swipe(self, 0, 0, (911, 610, 911, 40, 0.55))
+        stage.screen_swipe(self, 0, 0, threshold2=False, reset=False, f=(911, 610, 911, 40, 0.55))
         if int(region) in normal_task.normal_position_third:
-            stage.screen_swipe(self, int(lv), 3, False, (911, 610, 911, 40, 0.55))
+            stage.screen_swipe(self, int(lv), 3, threshold2=False, reset=False, f=(911, 610, 911, 40, 0.55))
             normal_task.open_task_info_window(self, normal_task.normal_position_third[int(region)][int(lv)])
         else:
             normal_task.open_task_info_window(self, normal_task.normal_position[int(lv)])

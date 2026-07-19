@@ -83,11 +83,11 @@ def start_scan(self):
     to_activity_page(self)
     to_tab(self, 'task')
     stage_list = self.tc['scan']['stage']
-    stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+    stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
     for task in stage_list:
         gq, count = task.split('-')
         gq = int(gq)
-        if gq in position:
+        if gq not in position:
             self.exit('本次活动收益最高的是前4关，不能扫荡其它关卡')
         self.click(*position[gq])
         rst = stage.confirm_scan(self, gq, count, 99)
@@ -129,8 +129,10 @@ def start_bonus(self):
     for i, bon in enumerate(bonus_list):
         cu_bonus = self.tc['bonus'][bon]
         for gq in cu_bonus:
-            stage.screen_swipe(self, 0, False, (926, 650, 926, 0, 0.1), threshold2=False, reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 650, 926, 0, 0.1))
             lv = int(gq)
+            if lv not in position:
+                self.exit('本次活动收益最高的是前4关，不能扫荡其它关卡')
             self.click(*position[lv])
             image.detect(self, 'main_story_main-lv-start-task', 1, rate=1)
             start_fight(self, 'bonus', i + 1, lv, tab)
@@ -145,7 +147,7 @@ def do_exp(self, tab):
     to_activity_page(self)
     to_tab(self, tab)
     if 'challenge' in tab:
-        stage.screen_swipe(self, 0, False, (926, 150, 926, 720, 0.1), threshold2=False, reset=False)
+        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
     state, stage_index = calc_need_fight_stage(self, tab)
     if state is None:
         self.logger.critical('本区域没有需要开图的任务关卡...')
@@ -159,6 +161,7 @@ prev_bonus_index = -1
 
 
 def start_fight(self, t, bonus_index, stage_index, tab):
+    global prev_bonus_index
     pos = {'main_story_main-lv-start-task': (943, 532), 'main_story_side-lv-start-task': (640, 511)}
     ends = ('momo_talk_menu', 'normal_task_force-edit', 'momo_talk_skip', 'momo_talk_confirm-skip', 'fight_start-task')
     end = image.detect(self, ends, pos)
@@ -229,7 +232,7 @@ def calc_need_fight_stage(self, tab):
             break
         task_state = check_task_state(self, tab)
         self.logger.info('当前关卡状态为:{0}'.format(task_state))
-        if task_state is not None and tab + '-' + str(stage_index) in stage_data:
+        if task_state is not None and tab + '-' + str(stage_index) not in stage_data:
             self.logger.error('当前关卡不支持卡图,查找下一关')
             self.click(1172, 358)
             stage_index += 1

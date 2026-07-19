@@ -17,6 +17,7 @@ force_index = 1
 
 
 def start(self):
+    global force_index
     force_index = 1
     home.go_home(self)
     to_total_war(self)
@@ -55,6 +56,7 @@ def check_ticket(self):
 
 
 def skip_main_story_plot(self):
+    global force_index
     pos = {'fight_pass-confirm': (1170, 666), 'total_war_get-prize': (773, 655), 'total_war_score-confirm': (640, 530), 'total_war_fight-result': (645, 570)}
     ends = ('fight_fail', 'total_war_menu')
     end = image.detect(self, ends, pos, rate=2)
@@ -90,6 +92,7 @@ need_help = True
 
 
 def do_exp(self, stage, need_swipe=True):
+    global need_help
     need_help = True
     if need_swipe:
         if stage <= 4:
@@ -113,6 +116,7 @@ def total_select_force(self):
 
 
 def start_auto_select(self):
+    global need_help
     p = {'total_war_force-edit': (1200, 185)}
     image.detect(self, 'cm_bonus-tzbd', p)
     position = {

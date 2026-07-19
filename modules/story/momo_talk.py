@@ -1,4 +1,6 @@
 import time
+import cv2
+import numpy as np
 from common import stage, image, color, limit
 from modules.baas import home
 
@@ -10,7 +12,7 @@ def to_momo_talk(self):
 
 def start(self):
     home.go_home(self)
-    if not color.check_rgb(self, (183, 125), (232, 68, 0)):
+    if not has_home_unread_badge(self):
         self.logger.warning('没有可以互动的学生')
         return
     to_momo_talk(self)
@@ -23,6 +25,18 @@ def start(self):
     self.click(471, 251)
     start_chat(self)
     start(self)
+
+
+def has_home_unread_badge(self):
+    ss = self.get_screenshot_array()
+    crop = ss[95:145, 135:190, :]
+    hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+    red1 = cv2.inRange(hsv, np.array([0, 80, 140]), np.array([15, 255, 255]))
+    red2 = cv2.inRange(hsv, np.array([170, 80, 140]), np.array([179, 255, 255]))
+    count = int(np.count_nonzero(red1 | red2))
+    matched = count >= 120
+    self.logger.info('momo_talk home unread badge red_pixels:%s R:%s', count, matched)
+    return matched
 
 
 def check_sort(self):

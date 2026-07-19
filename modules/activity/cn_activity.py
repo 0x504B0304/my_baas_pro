@@ -101,16 +101,24 @@ stage_data['challenge-task-4'] = {
 
 def to_tab(self, t):
     tabs = {
-        'story': ((832, 103, 833, 104), (77, 55, 40)),
-        'task': ((1002, 103, 1003, 104), (77, 55, 40)),
-        'challenge': ((1190, 103, 1191, 104), (77, 55, 40)),
-        'challenge-task': ((1190, 103, 1191, 104), (77, 55, 40)),
+        'story': ((760, 110), (730, 110)),
+        'task': ((935, 110), (900, 104)),
+        'challenge': ((1125, 110), (1060, 104)),
+        'challenge-task': ((1125, 110), (1060, 104)),
     }
-    if image.compare_image(self, 'cn_activity_quest', retry=3, cl=(730, 110)):
-        tabs['story'] = ((891, 110, 892, 111), (77, 55, 40))
-        tabs['task'] = ((1115, 103, 1116, 104), (77, 55, 40))
-    tab = tabs[t]
-    color.wait_rgb_similar(self, tab[0], tab[1], tab[0][0] - 100, tab[0][1], cl=tab[1])
+    legacy_tabs = {
+        'story': ((891, 110), (860, 104)),
+        'task': ((1115, 110), (1060, 104)),
+    }
+    if image.compare_image(self, 'cn_activity_quest', retry=0):
+        tabs.update(legacy_tabs)
+    click_pos, check_pos = tabs[t]
+    for _ in range(20):
+        if color.check_rgb(self, check_pos, (34, 60, 85), threshold=45):
+            return None
+        self.click(*click_pos, False)
+        time.sleep(0.3)
+    self.exit('活动页签切换失败: {0}'.format(t))
     return None
 
 
@@ -245,16 +253,16 @@ def open_gq(self, gq):
     stage2 = False
     stage3 = False
     gq = int(gq)
-    x, y = position_special[gq]
-    if gq in position_special:
+    x, y = activity_stage_position(gq, special=True)
+    if gq not in position_special:
         self.exit('本次活动不支持扫荡该关卡')
     if gq <= 4 and not stage1:
-        stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
+        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
     if 4 < gq < 9 and not stage2:
-        stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
-        stage.screen_swipe(self, False, (926, 590, 926, 150, 0.5), reset=False)
+        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
+        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 150, 0.5))
     if gq >= 9 and not stage3:
-        stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
     if gq >= 9 and image.compare_image(self, 'cm_activity-prize-info', 3):
         y -= 100
     self.click(x, y)
@@ -276,18 +284,18 @@ def start_scan(self):
     for task in stage_list:
         gq, count = task.split('-')
         gq = int(gq)
-        x, y = position[gq]
-        if gq in position:
+        x, y = activity_stage_position(gq)
+        if gq not in position:
             self.exit('本次活动不支持扫荡该关卡')
         if gq <= 4 and not stage1:
-            stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
             stage1 = True
         if 4 < gq < 9 and not stage2:
-            stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
-            stage.screen_swipe(self, False, (926, 590, 926, 150, 0.5), reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 150, 0.5))
             stage2 = True
         if gq >= 9 and not stage3:
-            stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
             stage3 = True
         if gq >= 9 and image.compare_image(self, 'cm_activity-prize-info', 3):
             y -= 100
@@ -340,16 +348,16 @@ def start_bonus(self):
         cu_bonus = self.tc['bonus'][bon]
         for gq in cu_bonus:
             lv = int(gq)
-            x, y = position[lv]
+            x, y = activity_stage_position(lv)
             if lv <= 4 and not stage1:
-                stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
+                stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
                 stage1 = True
             if 4 < lv < 9 and not stage2:
-                stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
-                stage.screen_swipe(self, False, (926, 590, 926, 150, 0.5), reset=False)
+                stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
+                stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 150, 0.5))
                 stage2 = True
             if lv >= 9 and not stage3:
-                stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+                stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
                 stage3 = True
             if lv >= 9 and image.compare_image(self, 'cm_activity-prize-info', 3):
                 y -= 100
@@ -361,13 +369,11 @@ def start_bonus(self):
 
 
 def do_exp(self, tab):
-    tmp = 'task'
-    if tab == tab:
-        tmp = 'story'
+    tmp = 'story' if tab == 'task' else 'task'
     to_tab(self, tmp)
     to_activity_page(self)
     to_tab(self, tab)
-    stage.screen_swipe(self, 0, False, (926, 150, 926, 720, 0.1), threshold2=False, reset=False)
+    stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
     state, stage_index = calc_need_fight_stage(self, tab)
     if state is None:
         self.logger.critical('本区域没有需要开图的任务关卡...')
@@ -381,6 +387,7 @@ prev_bonus_index = -1
 
 
 def start_fight(self, t, bonus_index, stage_index, tab):
+    global prev_bonus_index
     pos = {
         'main_story_main-lv-start-task': (943, 532),
         'main_story_side-lv-start-task': (640, 511),
@@ -469,7 +476,7 @@ def calc_need_fight_stage(self, tab):
     while True:
         task_state = check_task_state(self, tab)
         self.logger.info('当前关卡状态为:{0}'.format(task_state))
-        if tab + '-' + str(stage_index) in stage_data:
+        if tab + '-' + str(stage_index) not in stage_data:
             self.logger.error('当前关卡不支持卡图,查找下一关')
             self.click(1172, 358)
             stage_index += 1
@@ -492,3 +499,9 @@ def check_task_state(self, tab):
     if image.compare_image(self, 'normal_task_sss', 0, 0.9):
         return 'sss'
     return 'no-sss'
+
+
+def activity_stage_position(gq, special=False):
+    positions = position_special if special else position
+    slots = positions[int(gq)]
+    return slots[(int(gq) - 1) % len(slots)]

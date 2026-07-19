@@ -109,7 +109,7 @@ def start_scan(self):
     to_activity_page(self)
     to_tab(self, 'task')
     stage_list = self.tc['scan']['stage']
-    stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+    stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
     stage1 = False
     stage2 = False
     stage3 = False
@@ -117,18 +117,18 @@ def start_scan(self):
         gq, count = task.split('-')
         gq = int(gq)
         self.logger.warning('正在扫荡第{0}关 扫荡{1}次...'.format(gq, count))
-        x, y = position[gq]
-        if gq in position:
+        if gq not in position:
             self.exit('本次活动不支持扫荡该关卡')
+        x, y = position[gq]
         if gq <= 4 and not stage1:
-            stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
             stage1 = True
         if 4 < gq < 9 and not stage2:
-            stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
             stage.screen_swipe(self, False, (926, 590, 926, 150, 0.5), reset=False)
             stage2 = True
         if gq >= 9 and not stage3:
-            stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
             stage3 = True
         if gq >= 9 and image.compare_image(self, 'cm_activity-prize-info', 3):
             y -= 100
@@ -154,19 +154,19 @@ def start_bonus(self):
         cu_bonus = self.tc['bonus'][bon]
         for gq in cu_bonus:
             gq = int(gq)
-            x, y = position[gq]
             self.logger.warning('正在自动加成第{0}关...'.format(gq))
-            if gq in position:
+            if gq not in position:
                 self.exit('本次活动不支持扫荡该关卡')
+            x, y = position[gq]
             if gq <= 4 and not stage1:
-                stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
+                stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
                 stage1 = True
             if 4 < gq < 9 and not stage2:
-                stage.screen_swipe(self, 0, False, (926, 150, 926, 700, 0.1), threshold2=False, reset=False)
+                stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
                 stage.screen_swipe(self, False, (926, 590, 926, 150, 0.5), reset=False)
                 stage2 = True
             if gq >= 9 and not stage3:
-                stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+                stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
                 stage3 = True
             if gq >= 9 and image.compare_image(self, 'cm_activity-prize-info', 3):
                 y -= 100
@@ -184,7 +184,7 @@ def do_exp(self, tab):
     to_activity_page(self)
     to_tab(self, tab)
     if 'challenge' in tab:
-        stage.screen_swipe(self, 0, False, (926, 150, 926, 720, 0.1), threshold2=False, reset=False)
+        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
     state, stage_index = calc_need_fight_stage(self, tab)
     if state is None:
         self.logger.critical('本区域没有需要开图的任务关卡...')
@@ -198,6 +198,7 @@ prev_bonus_index = -1
 
 
 def start_fight(self, t, bonus_index, stage_index, tab):
+    global prev_bonus_index
     pos = {'main_story_main-lv-start-task': (943, 532), 'main_story_side-lv-start-task': (640, 511)}
     ends = ('momo_talk_menu', 'normal_task_force-edit', 'momo_talk_skip', 'momo_talk_confirm-skip', 'fight_start-task')
     end = image.detect(self, ends, pos)
@@ -268,7 +269,7 @@ def calc_need_fight_stage(self, tab):
             break
         task_state = check_task_state(self, tab)
         self.logger.info('当前关卡状态为:{0}'.format(task_state))
-        if task_state is not None and tab + '-' + str(stage_index) in stage_data:
+        if task_state is not None and tab + '-' + str(stage_index) not in stage_data:
             self.logger.error('当前关卡不支持卡图,查找下一关')
             self.click(1172, 358)
             stage_index += 1

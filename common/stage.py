@@ -1,10 +1,59 @@
 import time
 
+import cv2
+import numpy as np
+
 from common import ocr, image, color
 
 from modules.baas import home
 
 position = {'add_special': (1015, 330), 'max_special': (1085, 330), 'add_normal': (1015, 300), 'max_normal': (1085, 300)}
+quick_battle_notices = (
+    'normal_task_quick-battle-notice',
+    'normal_task_quick-battle-notice2',
+    'normal_task_quick-battle-notice3',
+    'normal_task_quick-battle-notice4',
+)
+
+
+def is_quick_battle_notice(self):
+    for name in quick_battle_notices:
+        if image.compare_image(self, name, 0, 0.68, ss=self.latest_img_array):
+            return True
+
+    if self.game_server == 'cn' and is_cn_quick_battle_text(self):
+        return True
+
+    out = ocr.screenshot_cut_get_text(self, (390, 300, 900, 375), need_loading=False)
+    text = ''.join(t.get('text', '') for t in out)
+    matched = '快速' in text and '战斗' in text
+    self.logger.info('quick_battle_notice OCR:%s R:%s', text, matched)
+    return matched
+
+
+def is_cn_quick_battle_text(self):
+    ss = self.latest_img_array
+    if ss is None:
+        ss = self.get_screenshot_array()
+    template = image.get_img_data(self, 'normal_task_quick-battle-text')
+    if type(template) == bool:
+        return False
+
+    crop = ss[280:385, 360:930, :]
+    result = cv2.matchTemplate(crop, template, cv2.TM_CCOEFF_NORMED)
+    score = float(np.max(result))
+    matched = score >= 0.72
+    self.logger.info('quick_battle_notice text-template S:%.2f R:%s', score, matched)
+    return matched
+
+
+def quick_battle_notice_pre(self, click=False):
+    if not is_quick_battle_notice(self):
+        return None
+    if click:
+        self.click(770, 500, False)
+        return 'click', 'normal_task_quick-battle-notice'
+    return 'end', 'normal_task_quick-battle-notice'
 
 
 def confirm_scan(self, stage, ct, max_count, cl=None, t='normal'):
@@ -22,9 +71,11 @@ def confirm_scan(self, stage, ct, max_count, cl=None, t='normal'):
 
     self.click(938, 403, False)
 
-    ends = ('wanted_buy-ticket', 'normal_task_buy-hard-count', 'normal_task_buy-ap-window', 'normal_task_task-info-notice', 'exchange_meeting_no-ticket', 'god_cross_no-score')
+    ends = ('wanted_buy-ticket', 'normal_task_buy-hard-count', 'normal_task_buy-ap-window',
+            'normal_task_task-info-notice', *quick_battle_notices,
+            'exchange_meeting_no-ticket', 'god_cross_no-score')
 
-    end = image.detect(self, ends)
+    end = image.detect(self, ends, pre_func=quick_battle_notice_pre, pre_argv=(self,))
 
     if end == 'normal_task_buy-ap-window' and self.tc['task'] == 'exchange_meeting':
         return 'delay'
@@ -37,10 +88,14 @@ def confirm_scan(self, stage, ct, max_count, cl=None, t='normal'):
         home.click_house_under(self)
         return None
 
-    if end == 'normal_task_buy-ap-window' or end == 'exchange_meeting_no-ticket':
+    if end == 'exchange_meeting_no-ticket':
+        self.click(56, 38, 0, 3)
         return 'return'
 
-    if end != 'normal_task_task-info-notice':
+    if end == 'normal_task_buy-ap-window':
+        return 'return'
+
+    if end not in ('normal_task_task-info-notice', *quick_battle_notices):
         return None
 
     start_scan(self)
@@ -48,9 +103,17 @@ def confirm_scan(self, stage, ct, max_count, cl=None, t='normal'):
 
 
 def start_scan(self):
-    pos = {'normal_task_task-info-notice': (770, 500), 'normal_task_scan-skip': (647, 506)}
+    pos = {
+        'normal_task_task-info-notice': (770, 500),
+        'normal_task_quick-battle-notice': (770, 500),
+        'normal_task_quick-battle-notice2': (770, 500),
+        'normal_task_quick-battle-notice3': (770, 500),
+        'normal_task_quick-battle-notice4': (770, 500),
+        'normal_task_scan-skip': (647, 506),
+    }
 
-    image.detect(self, 'normal_task_scan-confirm', pos)
+    image.detect(self, 'normal_task_scan-confirm', pos,
+                 pre_func=quick_battle_notice_pre, pre_argv=(self, True))
 
     self.click(643, 586)
 
@@ -158,10 +221,23 @@ def stage_convert(stage_list):
 
 
 def screen_swipe(self, stage=1, threshold1=0, threshold2=999, reset=True, f=(911, 650, 911, 40, 0.55)):
+    force_swipe = False
+    if isinstance(threshold1, (tuple, list)):
+        f = threshold1
+        reset = bool(stage)
+        stage = 1
+        threshold1 = 0
+        threshold2 = 999
+    elif isinstance(threshold2, (tuple, list)):
+        f = threshold2
+        threshold2 = 999
+    elif stage == 0 and threshold1 is False and threshold2 is False and reset is False:
+        force_swipe = True
+
     if reset:
         self.swipe(911, 199, 911, 600, 0.5)
         self.swipe(911, 199, 911, 600, 0.5)
-    if stage > threshold1:
+    if force_swipe or stage > threshold1:
         time.sleep(0.5)
         self.swipe(*f)
     if stage > threshold2:

@@ -10,6 +10,7 @@ x = {
     'bonus-tzbd': (575, 75, 705, 105),
     'get-prize': (638, 129, 690, 190),
     'agreement': (505, 175, 625, 210),
+    'auth-timeout': (531, 303, 749, 363),
     'activity-task-info': (540, 145, 745, 180),
     'activity-task-info2': (540, 145, 745, 180),
     'activity-sss': (219, 512, 251, 527),

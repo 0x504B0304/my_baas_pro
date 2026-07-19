@@ -28,7 +28,7 @@ def start(self):
         self.logger.error('开始执行困难开图:{0}'.format(gk))
         region, stage = task.split('-')
         self.stage_data = exp_normal_task.get_stage_data(self, region)
-        if gk in self.stage_data:
+        if gk not in self.stage_data:
             self.logger.critical('本关卡{0}尚未支持挑战任务，正在全力研发中...'.format(gk))
             continue
         normal_task.choose_region(self, int(region))

@@ -32,11 +32,16 @@ current_men = 'god_cross_menu'
 
 def to_tab(self, t):
     tabs = {
-        'story': ((832, 103, 833, 104), (65, 67, 118)),
-        'task': ((1002, 103, 1003, 104), (65, 67, 118)),
+        'story': ((760, 110), (730, 110)),
+        'task': ((935, 110), (900, 104)),
     }
-    tab = tabs[t]
-    color.wait_rgb_similar(self, tab[0], tab[1], tab[0][0] - 100, tab[0][1], cl=tab[1], threshold=20)
+    click_pos, check_pos = tabs[t]
+    for _ in range(20):
+        if color.check_rgb(self, check_pos, (34, 60, 85), threshold=45):
+            return None
+        self.click(*click_pos, False)
+        time.sleep(0.3)
+    self.exit('神名十字页签切换失败: {0}'.format(t))
     return None
 
 
@@ -93,7 +98,7 @@ def start_scan(self):
         gq, count = task.split('-')
         gq = int(gq)
         stage.screen_swipe(self, gq, 5, (910, 570, 910, 0, 0.1), f=(910, 570, 910, 0, 0.1))
-        self.click(*position[gq])
+        self.click(*god_cross_stage_position(gq))
         rst = stage.confirm_scan(self, gq, count, 99)
         to_activity_page(self)
         if rst == 'return':
@@ -133,22 +138,20 @@ def start_bonus(self):
     for i, bon in enumerate(bonus_list):
         cu_bonus = self.tc['bonus'][bon]
         for gq in cu_bonus:
-            stage.screen_swipe(self, 0, False, (930, 150, 930, 700, 0.1), threshold2=False, reset=False)
+            stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(930, 150, 930, 700, 0.1))
             lv = int(gq)
-            self.click(*position[lv])
+            self.click(*god_cross_stage_position(lv))
             image.detect(self, 'normal_task_task-info-window', 1, rate=1)
             start_fight(self, 'bonus', i + 1, lv, tab)
     return None
 
 
 def do_exp(self, tab):
-    tmp = 'task'
-    if tab == tab:
-        tmp = 'story'
+    tmp = 'story' if tab == 'task' else 'task'
     to_tab(self, tmp)
     to_activity_page(self)
     to_tab(self, tab)
-    stage.screen_swipe(self, 0, False, (926, 150, 926, 720, 0.1), threshold2=False, reset=False)
+    stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
     state, stage_index = calc_need_fight_stage(self, tab)
     if state is None:
         self.logger.critical('本区域没有需要开图的任务关卡...')
@@ -164,6 +167,7 @@ prev_bonus_index = -1
 
 
 def start_fight(self, t, bonus_index, stage_index, tab):
+    global prev_bonus_index
     pos = {'main_story_main-lv-start-task': (943, 532), 'main_story_side-lv-start-task': (640, 511)}
     ends = ('god_cross_no-score', 'momo_talk_menu', 'normal_task_force-edit',
             'momo_talk_skip', 'momo_talk_confirm-skip', 'fight_start-task')
@@ -240,7 +244,7 @@ def calc_need_fight_stage(self, tab):
     while True:
         task_state = check_task_state(self, tab)
         self.logger.info('当前关卡状态为:{0}'.format(task_state))
-        if tab + '-' + str(stage_index) in stage_data:
+        if tab + '-' + str(stage_index) not in stage_data:
             self.logger.error('当前关卡不支持卡图,查找下一关')
             self.click(1172, 358)
             stage_index += 1
@@ -263,3 +267,8 @@ def check_task_state(self, tab):
     if image.compare_image(self, 'normal_task_sss', 0, 0.9):
         return 'sss'
     return 'no-sss'
+
+
+def god_cross_stage_position(gq):
+    slots = position[int(gq)]
+    return slots[(int(gq) - 1) % len(slots)]

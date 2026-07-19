@@ -3,16 +3,16 @@ from modules.baas import home
 
 
 def to_buy_ap(self):
+    home.go_home(self)
     p = (619, 37)
     if self.game_server == 'jp':
         p = (638, 35)
     possible = {'home_student': p}
     end = ('buy_ap_limited', 'buy_ap_notice')
-    return image.detect(self, end, possible, pre_argv=home.go_home(self))
+    return image.detect(self, end, possible)
 
 
 def start(self):
-    home.go_home(self)
     res = to_buy_ap(self)
     if res == 'buy_ap_limited':
         home.go_home(self)

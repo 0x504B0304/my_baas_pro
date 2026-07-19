@@ -227,7 +227,7 @@ def do_shop(self, p1, p2):
     self.sleep(1)
     self.click(*p1)
     self.sleep(1)
-    stage.screen_swipe(self, 0, False, (926, 590, 926, 0, 0.1), threshold2=False, reset=False)
+    stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 590, 926, 0, 0.1))
     self.sleep(1)
     self.click(*p2)
     self.sleep(1)
