@@ -174,7 +174,7 @@ def start_fight(self, region, gk=None):
 
 def check_skip_auto_over(self):
     time.sleep(1)
-    image.compare_image(self, 'fight_auto-over', threshold=0.6, cl=(1082, 599), rate=2)
+    main_story.ensure_auto_enabled(self)
     ends = ('fight_skip-fight', 'fight_not-skip')
     end = image.detect(self, ends, cl=(1123, 545), rate=2, retry=5)
     ns = end == 'fight_not-skip'

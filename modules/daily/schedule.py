@@ -138,6 +138,22 @@ def all_course_ticket_empty(self):
     return digits.startswith('0')
 
 
+def course_exists(self, course, point):
+    x, y = point
+    ss = self.get_screenshot_array()
+    h, w = ss.shape[:2]
+    x1, y1 = max(0, x - 150), max(0, y - 32)
+    x2, y2 = min(w, x + 150), min(h, y + 35)
+    roi = ss[y1:y2, x1:x2]
+    if roi.size == 0:
+        return False
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    white_ratio = float(np.mean(gray > 245))
+    mean = float(np.mean(gray))
+    self.logger.info('schedule course:%s card_white_ratio:%.2f card_mean:%.2f', course, white_ratio, mean)
+    return white_ratio > 0.45 and mean > 225
+
+
 def course_finished(self, course):
     box = curse_avatar_box.get(self.game_server, {}).get(course)
     if box is None:
@@ -190,10 +206,13 @@ def learn_course(self, schedule, count):
                 break
             if c in completed_courses:
                 continue
+            if not course_exists(self, c, p):
+                self.logger.error('当前课程位置为空')
+                completed_courses.add(c)
+                continue
             if course_finished(self, c):
                 self.logger.error('当前课程已完成')
                 completed_courses.add(c)
-                progressed = True
                 continue
             self.logger.warning(f'开始学习课程{c}...')
             if self.game_server != 'cn':
@@ -201,7 +220,6 @@ def learn_course(self, schedule, count):
                 if finish:
                     self.logger.error('当前课程已完成')
                     completed_courses.add(c)
-                    progressed = True
                     continue
             else:
                 start_course(self, p)

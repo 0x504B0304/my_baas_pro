@@ -25,17 +25,17 @@ def to_make(self):
 
 def to_immediately(self):
     pos = {
+        'make_confirm-start': (769, 500),
         'make_choose-node': (1120, 650),
         'make_start-make2': (1120, 650),
-        'make_confirm-start': (769, 500),
     }
     image.detect(self, 'make_immediately', pos, rate=1)
 
 
 def to_receive(self):
     pos = {
-        'make_immediately': (1128, 278),
         'make_confirm-acc': (771, 478),
+        'make_immediately': (1128, 278),
     }
     image.detect(self, 'make_receive', pos)
 

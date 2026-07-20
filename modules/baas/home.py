@@ -31,7 +31,15 @@ def go_home(self):
     return
 
 
+def wake_home_ui(self):
+    # The CN client can enter a full-screen idle secretary view after a long
+    # period with no input. A normal in-screen tap restores the home UI.
+    self.click(640, 360, False)
+    time.sleep(0.3)
+
+
 def to_menu(self, end, pos, cl=None, rate=None):
+    wake_home_ui(self)
     possible = {
         'restart_news': (1232, 42),
         'home_news': (1140, 100),
@@ -52,11 +60,7 @@ def recursion_click_house(self):
     """
     递归点击首页按钮，如果返回False则返回首页失败，反之返回首页成功
     """
-    # The CN client can enter a full-screen idle secretary view after a long
-    # period with no input. Edge taps may be ignored there, while a normal
-    # in-screen tap restores the home UI.
-    self.click(640, 360, False)
-    time.sleep(0.3)
+    wake_home_ui(self)
 
     cl = (769, 555)
     if self.game_server == 'intl':

@@ -209,6 +209,8 @@ def detect(self, end, possibles=None, cl=None, pre_func=None, pre_argv=None, ret
                 if res[0] == 'end':
                     return res[1]
                 elif res[0] == 'click':
+                    if len(res) >= 3 and res[2] == 'progress':
+                        c = 0
                     time.sleep(rate)
                     continue
 

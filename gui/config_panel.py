@@ -312,7 +312,7 @@ class _ListEntryEditor(QWidget):
         del_btn = QPushButton('✕')
         del_btn.setFixedSize(_DEL_W, _ROW_H)
         del_btn.setObjectName('list_del_btn')
-        del_btn.clicked.connect(lambda row=row: self._del_row(row))
+        del_btn.clicked.connect(lambda _checked=False, row=row: self._del_row(row))
         hl.addWidget(del_btn)
         hl.addStretch()
 
