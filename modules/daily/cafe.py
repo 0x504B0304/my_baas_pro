@@ -181,17 +181,28 @@ def to_invitation_ticket(self):
     return image.detect(self, 'cafe_invitation-ticket', possible)
 
 
+def is_invite_confirm(self):
+    if getattr(self, 'game_server', None) != 'cn' or not hasattr(self, 'ocr'):
+        return False
+    return (
+        ocr.screenshot_check_text(self, '通知', (600, 140, 680, 182), 0, 0, False)
+        and ocr.screenshot_check_text(self, '确认', (720, 480, 820, 530), 0, 0, False)
+    )
+
+
 def do_invite_girl(self):
     y = 140
     while True:
         if image.compare_image(self, 'cafe_menu', 0):
             return
-        if image.compare_image(self, 'cafe_invitation-ticket', 0):
+        if image.compare_image(self, 'cafe_inv-confirm', 0):
+            self.click(706, 497, False)
+        elif image.compare_image(self, 'cafe_invitation-ticket', 0):
             if y >= 540:
                 y = 140
             y += 80
             self.click(790, y, False)
-        elif image.compare_image(self, 'cafe_inv-confirm', 0):
+        elif is_invite_confirm(self):
             self.click(706, 497, False)
         else:
             self.click(1268, 58, False)
