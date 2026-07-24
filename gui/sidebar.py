@@ -127,6 +127,7 @@ MENUS = [
         'child': [
             {'name': 'mailbox', 'text': '领取邮箱'},
             {'name': 'work_task', 'text': '工作任务'},
+            {'name': 'daily_gift', 'text': '每日礼包领取'},
         ],
     },
     {

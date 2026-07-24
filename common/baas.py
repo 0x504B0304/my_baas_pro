@@ -55,7 +55,7 @@ from modules.baas import restart, fhx, env_check, delete_friend
 from modules.daily import group, cafe, schedule, make
 from modules.exp.hard_task import exp_hard_task
 from modules.exp.normal_task import exp_normal_task
-from modules.reward import work_task, mailbox
+from modules.reward import work_task, mailbox, daily_gift
 from modules.shop import shop, buy_ap
 from modules.story import momo_talk, main_story
 from modules.task import challenge_hard_task, challenge_normal_task
@@ -88,6 +88,7 @@ func_dict = {
     'exp_normal_task': exp_normal_task.start,
     'mailbox': mailbox.start,
     'work_task': work_task.start,
+    'daily_gift': daily_gift.start,
     'buy_ap': buy_ap.start,
     'shop': shop.start,
     'momo_talk': momo_talk.start,
