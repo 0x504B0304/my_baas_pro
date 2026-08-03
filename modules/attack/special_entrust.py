@@ -14,9 +14,10 @@ wanted_lv_position = {
     4: (1116, 485),
     5: (1116, 585),
     6: (1116, 666),
-    7: (1116, 430),
-    8: (1116, 530),
-    9: (1116, 630),
+    7: (1116, 360),
+    8: (1116, 460),
+    9: (1116, 560),
+    10: (1116, 655),
 }
 
 wanted_lv_position_jp = {
@@ -142,7 +143,7 @@ def choose_entrust(self, position, max_count):
 
         image.compare_image(self, 'wanted_stage-list')
 
-        if tk['stage'] == 7:
+        if tk['stage'] == 7 and not (self.tc['task'] == 'wanted' and self.game_server == 'cn'):
             stage.screen_swipe(self, tk['stage'], 6, 11, f=(911, 650, 911, 200, 0.55))
             if self.tc['task'] == 'wanted':
                 time.sleep(0.1)
