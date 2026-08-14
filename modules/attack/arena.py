@@ -11,7 +11,7 @@ def to_arena(self):
         'home_bus': (880, 580),
         'arena_help': (1015, 130),
     }
-    home.to_menu(self, 'arena_menu', pos)
+    home.to_menu(self, 'arena_menu', pos, retry=120)
 
 
 def do_fight(self):

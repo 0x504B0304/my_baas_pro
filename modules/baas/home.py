@@ -38,7 +38,7 @@ def wake_home_ui(self):
     time.sleep(0.3)
 
 
-def to_menu(self, end, pos, cl=None, rate=None):
+def to_menu(self, end, pos, cl=None, rate=None, retry=999):
     wake_home_ui(self)
     possible = {
         'restart_news': (1232, 42),
@@ -49,7 +49,12 @@ def to_menu(self, end, pos, cl=None, rate=None):
         'work_task_big-month-menu': (1245, 40),
     }
     possible.update(pos)
-    image.detect(self, end, possible, cl=cl, rate=rate)
+    result = image.detect(self, end, possible, cl=cl, rate=rate, retry=retry)
+    if result is None:
+        raise restart.RestartTaskException(
+            '进入菜单失败，超过{0}次图片检索: {1}'.format(retry, end)
+        )
+    return result
 
 
 def click_house_under(self):

@@ -146,14 +146,63 @@ def compare_image_once(self, name, ss, threshold=0.7):
     return compare_image_data(self, ss_img, res_img, threshold, name)
 
 
+def _popup_ocr_text(self, ss):
+    """低频 OCR 检查国服全局弹窗，避免每次模板比较都运行 OCR。"""
+    if not hasattr(self, 'ocr') or self.ocr is None:
+        return ''
+
+    now = time.monotonic()
+    last_check = getattr(self, '_last_global_popup_ocr_check', 0.0)
+    if now - last_check < 1.5:
+        return ''
+    self._last_global_popup_ocr_check = now
+
+    try:
+        crop = ss[120:560, 400:900]
+        output = self.ocr.ocr(crop) or []
+        texts = []
+        for item in output:
+            if isinstance(item, dict):
+                texts.append(str(item.get('text', '')))
+            else:
+                texts.append(str(item))
+        return ''.join(texts).replace(' ', '')
+    except Exception as exc:
+        self.logger.debug('全局弹窗 OCR 检查失败:%s', exc)
+        return ''
+
+
 def handle_global_popup(self, ss=None):
     if ss is None:
         ss = self.get_screenshot_array()
-    if self.game_server == 'cn' and compare_image_once(self, 'cm_auth-timeout', ss, 0.7):
+    if self.game_server != 'cn':
+        return False
+
+    if compare_image_once(self, 'cm_auth-timeout', ss, 0.7):
         self.logger.warning('检测到登录会话超时弹窗，确认后重启当前任务')
         self.click(640, 505, False)
         time.sleep(3)
         raise restart.RestartTaskException('登录会话超时，重新执行当前任务')
+
+    popup_text = _popup_ocr_text(self, ss)
+    if '认证信息已超时' in popup_text or '将返回标题画面' in popup_text:
+        self.logger.warning('OCR检测到登录会话超时弹窗，确认后重启当前任务')
+        self.click(640, 505, False)
+        time.sleep(3)
+        raise restart.RestartTaskException('登录会话超时，重新执行当前任务')
+
+    if '网络连接不稳定' in popup_text or '再次连接' in popup_text:
+        self.logger.warning('检测到网络连接异常弹窗，点击再次连接后重启当前任务')
+        self.click(765, 503, False)
+        time.sleep(3)
+        raise restart.RestartTaskException('网络连接异常，重新执行当前任务')
+
+    if '需要下载' in popup_text and ('更新包' in popup_text or '是否继续' in popup_text):
+        self.logger.warning('检测到游戏资源更新弹窗，确认更新后重启当前任务')
+        self.click(766, 503, False)
+        time.sleep(3)
+        raise restart.RestartTaskException('游戏资源更新，重新执行当前任务')
+
     return False
 
 
