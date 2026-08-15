@@ -1,7 +1,7 @@
 import time
-from common import image, color, limit
+from common import image, color
 from common import stage
-from modules.baas import home
+from modules.baas import home, restart
 from modules.exp.normal_task import exp_normal_task
 from modules.story import main_story
 
@@ -99,33 +99,47 @@ stage_data['challenge-task-4'] = {
 }
 
 
-def to_tab(self, t):
-    tabs = {
+TAB_LAYOUTS = (
+    {
         'story': ((760, 110), (730, 110)),
         'task': ((935, 110), (900, 104)),
         'challenge': ((1125, 110), (1060, 104)),
         'challenge-task': ((1125, 110), (1060, 104)),
-    }
-    legacy_tabs = {
+    },
+    {
         'story': ((891, 110), (860, 104)),
         'task': ((1115, 110), (1060, 104)),
-    }
-    if image.compare_image(self, 'cn_activity_quest', retry=0):
-        tabs.update(legacy_tabs)
-    click_pos, check_pos = tabs[t]
-    for _ in range(20):
-        if color.check_rgb(self, check_pos, (34, 60, 85), threshold=45):
-            return None
-        self.click(*click_pos, False)
-        time.sleep(0.3)
-    self.exit('活动页签切换失败: {0}'.format(t))
-    return None
+        'challenge': ((1190, 110), (1135, 104)),
+        'challenge-task': ((1190, 110), (1135, 104)),
+    },
+)
+
+
+def to_tab(self, t):
+    if t not in TAB_LAYOUTS[0]:
+        raise ValueError('不支持的活动页签: {0}'.format(t))
+
+    # quest 模板仅用于确定尝试顺序，不能作为唯一布局判断依据。
+    legacy_first = image.compare_image(self, 'cn_activity_quest', retry=0)
+    layouts = TAB_LAYOUTS[::-1] if legacy_first else TAB_LAYOUTS
+    for layout in layouts:
+        click_pos, check_pos = layout[t]
+        for _ in range(8):
+            if color.check_rgb(self, check_pos, (34, 60, 85), threshold=55):
+                return None
+            self.click(*click_pos, False)
+            time.sleep(0.3)
+
+    raise restart.RestartTaskException('活动页签切换失败: {0}'.format(t))
 
 
 is_exp = False
 
 
-def to_activity_page(self):
+ACTIVITY_PAGE_MARKERS = (current_men, 'cm_activity-notice')
+
+
+def to_activity_page(self, retry=120):
     pos = {
         'momo_talk_menu': (1205, 42, 0.95), 'momo_talk_skip': (1212, 116),
         'momo_talk_confirm-skip': (770, 516), 'normal_task_task-info': (1234, 26),
@@ -134,8 +148,12 @@ def to_activity_page(self):
         'home_new-players': (1234, 26), 'god_cross_task': (55, 37),
         'cm_get-prize': (650, 640),
     }
-    image.detect(self, current_men, pos)
-    return None
+    result = image.detect(self, ACTIVITY_PAGE_MARKERS, pos, retry=retry)
+    if result is None:
+        raise restart.RestartTaskException(
+            '进入国服活动页面失败，超过{0}次图片检索'.format(retry)
+        )
+    return result
 
 
 def start(self):
@@ -253,9 +271,9 @@ def open_gq(self, gq):
     stage2 = False
     stage3 = False
     gq = int(gq)
-    x, y = activity_stage_position(gq, special=True)
     if gq not in position_special:
         self.exit('本次活动不支持扫荡该关卡')
+    x, y = activity_stage_position(gq, special=True)
     if gq <= 4 and not stage1:
         stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
     if 4 < gq < 9 and not stage2:
@@ -284,9 +302,9 @@ def start_scan(self):
     for task in stage_list:
         gq, count = task.split('-')
         gq = int(gq)
-        x, y = activity_stage_position(gq)
         if gq not in position:
             self.exit('本次活动不支持扫荡该关卡')
+        x, y = activity_stage_position(gq)
         if gq <= 4 and not stage1:
             stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 700, 0.1))
             stage1 = True
@@ -369,18 +387,21 @@ def start_bonus(self):
 
 
 def do_exp(self, tab):
-    tmp = 'story' if tab == 'task' else 'task'
-    to_tab(self, tmp)
-    to_activity_page(self)
-    to_tab(self, tab)
-    stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
-    state, stage_index = calc_need_fight_stage(self, tab)
-    if state is None:
-        self.logger.critical('本区域没有需要开图的任务关卡...')
-        return None
-    start_fight(self, 'exp', 0, stage_index, tab)
-    do_exp(self, tab)
-    return None
+    max_runs = len([key for key in stage_data if key.startswith(tab + '-')])
+    for _ in range(max_runs):
+        tmp = 'story' if tab == 'task' else 'task'
+        to_tab(self, tmp)
+        to_activity_page(self)
+        to_tab(self, tab)
+        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
+        state, stage_index = calc_need_fight_stage(self, tab)
+        if state is None:
+            self.logger.info('活动%s开图已完成，没有需要战斗的关卡', tab)
+            return None
+        start_fight(self, 'exp', 0, stage_index, tab)
+    raise restart.RestartTaskException(
+        '活动{0}开图超过最大关卡数，停止本轮任务'.format(tab)
+    )
 
 
 prev_bonus_index = -1
@@ -396,7 +417,9 @@ def start_fight(self, t, bonus_index, stage_index, tab):
     }
     ends = ('god_cross_no-score', 'momo_talk_menu', 'normal_task_force-edit',
             'momo_talk_skip', 'momo_talk_confirm-skip', 'fight_start-task', 'cm_get-prize')
-    end = image.detect(self, ends, pos)
+    end = image.detect(self, ends, pos, retry=300)
+    if end is None:
+        raise restart.RestartTaskException('活动关卡启动流程识别超时')
     if end == 'momo_talk_menu':
         skip_story(self)
         return start_fight(self, t, bonus_index, stage_index, tab)
@@ -445,7 +468,9 @@ def wait_fight_over(self):
         'momo_talk_confirm-skip': (770, 516), 'cn_activity_unlock': (1259, 62),
         'cm_get-prize': (650, 640),
     }
-    image.detect(self, current_men, possible)
+    result = image.detect(self, ACTIVITY_PAGE_MARKERS, possible, retry=300)
+    if result is None:
+        raise restart.RestartTaskException('战斗结束后无法返回活动页面')
     return None
 
 
@@ -459,43 +484,65 @@ def skip_story(self):
         'momo_talk_confirm-skip': (770, 516), 'cn_activity_unlock': (1259, 62),
     }
     ends = ('normal_task_force-edit', 'cm_get-prize')
-    return image.detect(self, ends, pos)
+    result = image.detect(self, ends, pos, retry=300)
+    if result is None:
+        raise restart.RestartTaskException('活动剧情跳过流程识别超时')
+    return result
 
 
 def wait_task_info(self, open_info=True):
+    markers = (
+        'cn_activity_info-window',
+        'normal_task_task-info',
+        'normal_task_side-quest',
+    )
     if open_info:
-        image.detect(self, ('normal_task_task-info', 'normal_task_side-quest'), cl=(1082, 190), rate=2)
-        return None
-    image.compare_image(self, 'normal_task_task-info', 10)
-    return None
+        result = image.detect(
+            self,
+            markers,
+            cl=(1130, 190),
+            rate=0.5,
+            retry=20,
+        )
+        if result is None:
+            raise restart.RestartTaskException('活动关卡信息窗口识别失败')
+        return result
+    return any(image.compare_image(self, marker, retry=0) for marker in markers)
 
 
 def calc_need_fight_stage(self, tab):
     wait_task_info(self)
-    stage_index = 1
-    while True:
+    supported = sorted(
+        int(key.rsplit('-', 1)[1])
+        for key in stage_data
+        if key.startswith(tab + '-')
+    )
+    for stage_index in supported:
         task_state = check_task_state(self, tab)
         self.logger.info('当前关卡状态为:{0}'.format(task_state))
-        if tab + '-' + str(stage_index) not in stage_data:
-            self.logger.error('当前关卡不支持卡图,查找下一关')
-            self.click(1172, 358)
-            stage_index += 1
-            continue
         if task_state == 'sss':
-            self.logger.warning('不满足战斗条件,查找下一关')
+            self.logger.warning('当前关卡已三星,查找下一关')
             self.click(1172, 358)
-            stage_index += 1
             continue
         if task_state is None:
             return (None, 0)
         return (task_state, stage_index)
+    return (None, 0)
 
 
 def check_task_state(self, tab):
-    wait_task_info(self, False)
     time.sleep(1)
-    if image.compare_image(self, current_men, 0):
+    # 活动详情是覆盖在活动页上的弹窗，底层的 notice/menu 模板仍可能可见。
+    # 因此只能以详情窗口是否存在判断是否已经遍历到末尾。
+    if not wait_task_info(self, False):
         return None
+    if tab == 'story':
+        # 剧情详情不显示普通关卡的三星标志；未完成关卡会显示“首次”奖励。
+        return (
+            'no-sss'
+            if image.compare_image(self, 'cn_activity_first-reward', 0, 0.8)
+            else 'sss'
+        )
     if image.compare_image(self, 'normal_task_sss', 0, 0.9):
         return 'sss'
     return 'no-sss'
