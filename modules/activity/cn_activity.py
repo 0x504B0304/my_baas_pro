@@ -1,5 +1,5 @@
 import time
-from common import image, color
+from common import image, color, ocr
 from common import stage
 from modules.baas import home, restart
 from modules.exp.normal_task import exp_normal_task
@@ -137,23 +137,74 @@ is_exp = False
 
 
 ACTIVITY_PAGE_MARKERS = (current_men, 'cm_activity-notice')
+ACTIVITY_BOTTOM_NAV_AREA = (40, 595, 650, 705)
 
 
 def to_activity_page(self, retry=120):
+    home.wake_home_ui(self)
     pos = {
+        'restart_news': (1232, 42),
+        'home_news': (1140, 100),
+        'home_news2': (1140, 100),
+        'home_news-intl': (1226, 54),
+        'cn_activity_home-entry': (1185, 215),
         'momo_talk_menu': (1205, 42, 0.95), 'momo_talk_skip': (1212, 116),
         'momo_talk_confirm-skip': (770, 516), 'normal_task_task-info': (1234, 26),
-        'normal_task_buy-ap-window': (920, 166), 'home_student': (1200, 573),
-        'home_bus': (100, 160), 'new_year_guide': (1184, 156),
+        'normal_task_buy-ap-window': (920, 166),
+        'new_year_guide': (1184, 156),
         'home_new-players': (1234, 26), 'god_cross_task': (55, 37),
         'cm_get-prize': (650, 640),
     }
-    result = image.detect(self, ACTIVITY_PAGE_MARKERS, pos, retry=retry)
-    if result is None:
-        raise restart.RestartTaskException(
-            '进入国服活动页面失败，超过{0}次图片检索'.format(retry)
-        )
-    return result
+    for _ in range(3):
+        result = image.detect(self, ACTIVITY_PAGE_MARKERS, pos, retry=retry)
+        if result is None:
+            raise restart.RestartTaskException(
+                '进入国服活动页面失败，超过{0}次图片检索'.format(retry)
+            )
+        if is_target_activity_page(self):
+            return result
+        self.logger.warning('当前活动不是国服通用活动目标，返回首页重新选择活动入口')
+        self.click(1233, 25)
+        time.sleep(2)
+    raise restart.RestartTaskException('国服通用活动入口选择失败')
+
+
+def is_target_activity_page(self):
+    return image.compare_image(self, 'cn_activity_event-logo', retry=0, threshold=0.7)
+
+
+def is_activity_stage_page(self):
+    if image.compare_image(self, 'cn_activity_stage-story-tab', retry=0, threshold=0.75):
+        return True
+    return color.check_rgb(self, (1130, 190), (140, 226, 253), threshold=55)
+
+
+def _click_activity_story_entry_by_ocr(self):
+    if not hasattr(self, 'ocr') or self.ocr is None:
+        return False
+    found, pos = ocr.screenshot_get_position(
+        self, '故事', ACTIVITY_BOTTOM_NAV_AREA, wait=0, need_loading=False,
+    )
+    if not found or not pos:
+        return False
+    xs = [p[0] for p in pos]
+    ys = [p[1] for p in pos]
+    x = ACTIVITY_BOTTOM_NAV_AREA[0] + int(sum(xs) / len(xs))
+    y = ACTIVITY_BOTTOM_NAV_AREA[1] + int(sum(ys) / len(ys))
+    self.click(x, y)
+    return True
+
+
+def enter_activity_stage_page(self):
+    if is_activity_stage_page(self):
+        return None
+    if image.compare_image(self, 'cn_activity_story-entry', retry=0, threshold=0.75):
+        self.click(422, 670)
+    elif not _click_activity_story_entry_by_ocr(self):
+        raise restart.RestartTaskException('活动故事入口识别失败')
+    if image.detect(self, 'cn_activity_stage-story-tab', retry=30) is None:
+        raise restart.RestartTaskException('活动关卡页识别失败')
+    return None
 
 
 def start(self):
@@ -389,6 +440,8 @@ def start_bonus(self):
 def do_exp(self, tab):
     max_runs = len([key for key in stage_data if key.startswith(tab + '-')])
     for _ in range(max_runs):
+        to_activity_page(self)
+        enter_activity_stage_page(self)
         tmp = 'story' if tab == 'task' else 'task'
         to_tab(self, tmp)
         to_activity_page(self)
@@ -537,15 +590,22 @@ def check_task_state(self, tab):
     if not wait_task_info(self, False):
         return None
     if tab == 'story':
-        # 剧情详情不显示普通关卡的三星标志；未完成关卡会显示“首次”奖励。
-        return (
-            'no-sss'
-            if image.compare_image(self, 'cn_activity_first-reward', 0, 0.8)
-            else 'sss'
-        )
+        return 'no-sss' if is_story_stage_unfinished(self) else 'sss'
     if image.compare_image(self, 'normal_task_sss', 0, 0.9):
         return 'sss'
     return 'no-sss'
+
+
+def is_story_stage_unfinished(self):
+    # 剧情可以重复进入并消耗体力，不能用“进入剧情”判断是否未看。
+    # 只有奖励区出现“首次”时，才说明这条故事还没有完成。
+    if image.compare_image(self, 'cn_activity_first-reward-blue', 0, 0.75):
+        return True
+    if image.compare_image(self, 'cn_activity_first-reward', 0, 0.8):
+        return True
+    if getattr(self, 'ocr', None) is not None and ocr.screenshot_check_text(self, '首次', (340, 300, 665, 395), 0, 0, False):
+        return True
+    return False
 
 
 def activity_stage_position(gq, special=False):
