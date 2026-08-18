@@ -1,6 +1,7 @@
 import time
 from common import image, color, limit
 from common import stage
+from modules.activity import cn_activity
 from modules.baas import home
 from modules.exp.normal_task import exp_normal_task
 from modules.story import main_story
@@ -31,18 +32,7 @@ current_men = 'god_cross_menu'
 
 
 def to_tab(self, t):
-    tabs = {
-        'story': ((760, 110), (730, 110)),
-        'task': ((935, 110), (900, 104)),
-    }
-    click_pos, check_pos = tabs[t]
-    for _ in range(20):
-        if color.check_rgb(self, check_pos, (34, 60, 85), threshold=45):
-            return None
-        self.click(*click_pos, False)
-        time.sleep(0.3)
-    self.exit('神名十字页签切换失败: {0}'.format(t))
-    return None
+    return cn_activity.to_tab(self, t)
 
 
 def to_activity_page(self):
@@ -111,21 +101,10 @@ def start_draw_card(self):
         return None
     to_activity_page(self)
     pos = {current_men: (520, 640)}
-    image.detect(self, 'brzx_draw-menu', pos)
-    time.sleep(2)
-    while True:
-        if color.check_rgb(self, (800, 600), (118, 220, 255)):
-            image.detect(self, 'brzx_card', cl=(815, 568))
-        if not color.check_rgb(self, (970, 590), (245, 233, 74)):
-            self.logger.error('不能抽卡了...')
-            return None
-        time.sleep(0.1)
-        self.click(1050, 560)
-        ends = (('brzx_not-210', 0.9), ('brzx_210', 0.9))
-        end = image.detect(self, ends, rate=0)
-        if end == 'brzx_not-210':
-            self.logger.error('不能抽卡了...')
-            return None
+    if image.detect(self, 'brzx_draw-menu', pos, retry=5) is None:
+        self.logger.warning('当前神名十字活动没有卡片商店入口')
+        return None
+    return cn_activity.draw_cards_on_current_page(self)
 
 
 def start_bonus(self):

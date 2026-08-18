@@ -16,8 +16,8 @@ def to_daily_gift(self):
     self.click(835, 181, False)
     if image.detect(
         self,
-        (('daily_gift_free-available', 0.9), ('daily_gift_free-unavailable', 0.9)),
-        retry=20, rate=0.5,
+        (('daily_gift_free-unavailable', 0.8), ('daily_gift_free-available', 0.9)),
+        retry=5, rate=0.5,
     ):
         return True
 
@@ -33,7 +33,7 @@ def _status_text(self):
 
 
 def is_free_gift_available(self):
-    if image.compare_image(self, 'daily_gift_free-unavailable', 0, 0.9):
+    if image.compare_image(self, 'daily_gift_free-unavailable', 0, 0.8):
         return False
     if image.compare_image(self, 'daily_gift_free-available', 0, 0.9):
         return True

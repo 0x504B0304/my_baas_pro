@@ -1,4 +1,7 @@
 import time
+from fuzzywuzzy import fuzz
+import numpy as np
+
 from common import image, color, ocr
 from common import stage
 from modules.baas import home, restart
@@ -106,29 +109,122 @@ TAB_LAYOUTS = (
         'challenge': ((1125, 110), (1060, 104)),
         'challenge-task': ((1125, 110), (1060, 104)),
     },
-    {
-        'story': ((891, 110), (860, 104)),
-        'task': ((1115, 110), (1060, 104)),
-        'challenge': ((1190, 110), (1135, 104)),
-        'challenge-task': ((1190, 110), (1135, 104)),
-    },
 )
+
+ACTIVITY_TAB_LABELS = {
+    'story': '故事',
+    'task': '任务',
+    'challenge': '挑战',
+    'challenge-task': '挑战',
+}
+ACTIVITY_STAGE_TAB_AREA = (670, 75, 1210, 145)
+ACTIVITY_BOTTOM_NAV_AREA = (30, 590, 650, 710)
+
+
+def _activity_tab_selected(self, tab):
+    screenshot = self.get_screenshot_array()
+    for layout in TAB_LAYOUTS:
+        check_pos = layout[tab][1]
+        if not color.check_rgb(
+            self, check_pos, (34, 60, 85), threshold=55,
+            ss_data=screenshot,
+        ):
+            continue
+        blue, _, red = screenshot[check_pos[1], check_pos[0]]
+        if int(blue) - int(red) >= 20:
+            return True
+    return False
+
+
+def _activity_tab_positions_by_ocr(self):
+    if getattr(self, 'ocr', None) is None:
+        return {}
+    output = ocr.screenshot_cut_get_text(
+        self, ACTIVITY_STAGE_TAB_AREA, 0, False,
+    )
+    result = {}
+    for item in output:
+        text = str(item.get('text', ''))
+        pos = item.get('position')
+        if pos is None:
+            continue
+        for tab, label in ACTIVITY_TAB_LABELS.items():
+            if fuzz.ratio(text, label) <= 60:
+                continue
+            xs = [point[0] for point in pos]
+            ys = [point[1] for point in pos]
+            result[tab] = (
+                ACTIVITY_STAGE_TAB_AREA[0] + int(sum(xs) / len(xs)),
+                ACTIVITY_STAGE_TAB_AREA[1] + int(sum(ys) / len(ys)),
+            )
+    return result
+
+
+def _activity_bottom_entry_by_ocr(self, labels):
+    if getattr(self, 'ocr', None) is None:
+        return None, False
+    output = ocr.screenshot_cut_get_text(
+        self, ACTIVITY_BOTTOM_NAV_AREA, 0, False,
+    )
+    best = None
+    for item in output:
+        text = str(item.get('text', ''))
+        pos = item.get('position')
+        if pos is None:
+            continue
+        score = max(fuzz.ratio(text, label) for label in labels)
+        if score <= 60 or (best is not None and score <= best[0]):
+            continue
+        xs = [point[0] for point in pos]
+        ys = [point[1] for point in pos]
+        best = (
+            score,
+            (
+                ACTIVITY_BOTTOM_NAV_AREA[0] + int(sum(xs) / len(xs)),
+                ACTIVITY_BOTTOM_NAV_AREA[1] + int(sum(ys) / len(ys)),
+            ),
+        )
+    return (best[1] if best is not None else None), bool(output)
+
+
+def _enter_activity_feature_page(self, marker, labels, fallback_pos):
+    if image.compare_image(self, marker, retry=0):
+        return True
+    click_pos, ocr_available = _activity_bottom_entry_by_ocr(self, labels)
+    if click_pos is None:
+        if ocr_available:
+            self.logger.info('当前活动底栏没有玩法入口:%s', '/'.join(labels))
+            return False
+        click_pos = fallback_pos
+    self.click(*click_pos, False)
+    if image.compare_image(self, marker, retry=5):
+        return True
+    self.logger.warning('活动玩法入口已点击，但目标页面识别失败:%s', '/'.join(labels))
+    if not is_activity_stage_page(self):
+        self.click(55, 35, False)
+        time.sleep(2)
+    return False
 
 
 def to_tab(self, t):
-    if t not in TAB_LAYOUTS[0]:
+    if t not in ACTIVITY_TAB_LABELS:
         raise ValueError('不支持的活动页签: {0}'.format(t))
+    tab = 'challenge' if t == 'challenge-task' else t
 
-    # quest 模板仅用于确定尝试顺序，不能作为唯一布局判断依据。
-    legacy_first = image.compare_image(self, 'cn_activity_quest', retry=0)
-    layouts = TAB_LAYOUTS[::-1] if legacy_first else TAB_LAYOUTS
-    for layout in layouts:
-        click_pos, check_pos = layout[t]
-        for _ in range(8):
-            if color.check_rgb(self, check_pos, (34, 60, 85), threshold=55):
-                return None
-            self.click(*click_pos, False)
-            time.sleep(0.3)
+    if _activity_tab_selected(self, tab):
+        return None
+
+    positions = _activity_tab_positions_by_ocr(self)
+    attempts = []
+    if tab in positions:
+        attempts.append(positions[tab])
+    attempts.extend(layout[tab][0] for layout in TAB_LAYOUTS)
+
+    for click_pos in dict.fromkeys(attempts):
+        self.click(*click_pos, False)
+        time.sleep(0.6)
+        if _activity_tab_selected(self, tab):
+            return None
 
     raise restart.RestartTaskException('活动页签切换失败: {0}'.format(t))
 
@@ -137,17 +233,81 @@ is_exp = False
 
 
 ACTIVITY_PAGE_MARKERS = (current_men, 'cm_activity-notice')
-ACTIVITY_BOTTOM_NAV_AREA = (40, 595, 650, 705)
+ACTIVITY_HOME_ENTRY_POS = (1185, 215)
+ACTIVITY_HOME_CAROUSEL_AREA = (1100, 155, 1260, 260)
+ACTIVITY_HOME_CAROUSEL_DOT_AREA = (1160, 262, 1230, 272)
+ACTIVITY_HOME_CAROUSEL_MAX_CANDIDATES = 8
+ACTIVITY_HOME_CAROUSEL_POLL = 0.2
+ACTIVITY_HOME_CAROUSEL_TIMEOUT = 30
+ACTIVITY_HOME_CAROUSEL_STABLE_DELTA = 2.5
+ACTIVITY_STAGE_CONTENT_AREA = (680, 140, 1210, 695)
+ACTIVITY_FIRST_STAGE_POS = {
+    'story': (1130, 190),
+    'task': (1130, 190),
+}
+DRAW_RESOURCE_AREA = (712, 165, 790, 202)
+DRAW_SINGLE_COST_AREA = (780, 520, 870, 565)
+DRAW_SINGLE_BUTTON_POS = (815, 568)
+DRAW_SINGLE_COLOR_POS = (800, 600)
+DRAW_SHUFFLE_BUTTON_POS = (1150, 185)
+DRAW_SHUFFLE_COLOR_POS = (1150, 185)
+DRAW_MAX_ACTIONS = 100
+
+
+def _home_activity_carousel_index(screenshot):
+    x1, y1, x2, y2 = ACTIVITY_HOME_CAROUSEL_DOT_AREA
+    strip = screenshot[y1:y2, x1:x2].astype(np.int16)
+    active = (strip[:, :, 0] - strip[:, :, 2] > 120) & (strip[:, :, 0] > 180)
+    _, xs = np.where(active)
+    if len(xs) < 3:
+        return None
+    return x1 + int(round(float(np.median(xs))))
+
+
+def _wait_home_activity_candidate(self, excluded, timeout=ACTIVITY_HOME_CAROUSEL_TIMEOUT):
+    deadline = time.monotonic() + timeout
+    previous_index = None
+    previous_crop = None
+    x1, y1, x2, y2 = ACTIVITY_HOME_CAROUSEL_AREA
+    while time.monotonic() < deadline:
+        screenshot = self.get_screenshot_array()
+        index = _home_activity_carousel_index(screenshot)
+        crop = screenshot[y1:y2, x1:x2]
+        stable = False
+        if index is not None and index not in excluded and float(crop.mean()) >= 70:
+            if previous_index == index and previous_crop is not None:
+                delta = float(np.abs(crop.astype(np.int16) - previous_crop).mean())
+                stable = delta <= ACTIVITY_HOME_CAROUSEL_STABLE_DELTA
+        if stable:
+            return index
+        previous_index = index
+        previous_crop = crop.copy()
+        time.sleep(ACTIVITY_HOME_CAROUSEL_POLL)
+    raise restart.RestartTaskException('主页活动轮播候选识别超时')
+
+
+def open_next_home_activity_candidate(self):
+    seen = getattr(self, '_activity_home_carousel_seen', set())
+    if len(seen) >= ACTIVITY_HOME_CAROUSEL_MAX_CANDIDATES:
+        raise restart.RestartTaskException('主页活动轮播没有可用的通用活动入口')
+    index = _wait_home_activity_candidate(self, set(seen))
+    seen.add(index)
+    self._activity_home_carousel_seen = seen
+    self.logger.info('尝试主页活动轮播候选，高亮点 x:%s', index)
+    self.click(*ACTIVITY_HOME_ENTRY_POS, False)
+    time.sleep(2)
+    return False
 
 
 def to_activity_page(self, retry=120):
-    home.wake_home_ui(self)
+    self._activity_home_carousel_seen = set()
     pos = {
         'restart_news': (1232, 42),
         'home_news': (1140, 100),
         'home_news2': (1140, 100),
         'home_news-intl': (1226, 54),
-        'cn_activity_home-entry': (1185, 215),
+        'home_quick-home': (1233, 25),
+        'home_student': (open_next_home_activity_candidate, (self,)),
         'momo_talk_menu': (1205, 42, 0.95), 'momo_talk_skip': (1212, 116),
         'momo_talk_confirm-skip': (770, 516), 'normal_task_task-info': (1234, 26),
         'normal_task_buy-ap-window': (920, 166),
@@ -155,56 +315,66 @@ def to_activity_page(self, retry=120):
         'home_new-players': (1234, 26), 'god_cross_task': (55, 37),
         'cm_get-prize': (650, 640),
     }
-    for _ in range(3):
+    for _ in range(ACTIVITY_HOME_CAROUSEL_MAX_CANDIDATES * 2 + 2):
         result = image.detect(self, ACTIVITY_PAGE_MARKERS, pos, retry=retry)
         if result is None:
             raise restart.RestartTaskException(
                 '进入国服活动页面失败，超过{0}次图片检索'.format(retry)
             )
-        if is_target_activity_page(self):
+        if result == current_men:
+            if is_target_activity_page(self, retry=1):
+                return result
+            self.logger.info('当前可能位于活动子页面，尝试返回活动关卡主页')
+            self.click(55, 35, False)
+            time.sleep(2)
+            continue
+        elif is_target_activity_page(self, retry=4):
             return result
-        self.logger.warning('当前活动不是国服通用活动目标，返回首页重新选择活动入口')
+        self.logger.warning('当前活动页不是通用活动关卡结构，返回首页重新选择活动入口')
         self.click(1233, 25)
-        time.sleep(2)
-    raise restart.RestartTaskException('国服通用活动入口选择失败')
+        time.sleep(3)
+    raise restart.RestartTaskException('国服通用活动关卡入口选择失败')
 
 
-def is_target_activity_page(self):
-    return image.compare_image(self, 'cn_activity_event-logo', retry=0, threshold=0.7)
+def is_target_activity_page(self, retry=0):
+    if is_activity_stage_page(self):
+        return not is_activity_ended(self)
+    if retry <= 0:
+        return False
+    time.sleep(0.5)
+    return is_target_activity_page(self, retry - 1)
+
+
+def is_activity_ended(self):
+    if getattr(self, 'ocr', None) is None:
+        return False
+    return ocr.screenshot_check_text(
+        self, '活动时间已结束', ACTIVITY_STAGE_CONTENT_AREA, 0, 0, False,
+    )
+
+
+def has_activity_stage_tabs(self):
+    if image.compare_image(self, 'cn_activity_stage-story-tab', retry=0, threshold=0.75):
+        return True
+    positions = _activity_tab_positions_by_ocr(self)
+    labels = {ACTIVITY_TAB_LABELS[tab] for tab in positions}
+    if len(labels) >= 2:
+        return True
+    selected = [
+        _activity_tab_selected(self, tab)
+        for tab in ('story', 'task', 'challenge')
+    ]
+    return sum(selected) == 1
 
 
 def is_activity_stage_page(self):
-    if image.compare_image(self, 'cn_activity_stage-story-tab', retry=0, threshold=0.75):
-        return True
-    return color.check_rgb(self, (1130, 190), (140, 226, 253), threshold=55)
-
-
-def _click_activity_story_entry_by_ocr(self):
-    if not hasattr(self, 'ocr') or self.ocr is None:
-        return False
-    found, pos = ocr.screenshot_get_position(
-        self, '故事', ACTIVITY_BOTTOM_NAV_AREA, wait=0, need_loading=False,
-    )
-    if not found or not pos:
-        return False
-    xs = [p[0] for p in pos]
-    ys = [p[1] for p in pos]
-    x = ACTIVITY_BOTTOM_NAV_AREA[0] + int(sum(xs) / len(xs))
-    y = ACTIVITY_BOTTOM_NAV_AREA[1] + int(sum(ys) / len(ys))
-    self.click(x, y)
-    return True
+    return has_activity_stage_tabs(self)
 
 
 def enter_activity_stage_page(self):
     if is_activity_stage_page(self):
         return None
-    if image.compare_image(self, 'cn_activity_story-entry', retry=0, threshold=0.75):
-        self.click(422, 670)
-    elif not _click_activity_story_entry_by_ocr(self):
-        raise restart.RestartTaskException('活动故事入口识别失败')
-    if image.detect(self, 'cn_activity_stage-story-tab', retry=30) is None:
-        raise restart.RestartTaskException('活动关卡页识别失败')
-    return None
+    raise restart.RestartTaskException('活动右上关卡页签识别失败')
 
 
 def start(self):
@@ -213,6 +383,7 @@ def start(self):
     home.go_home(self)
     to_activity_page(self)
     start_exp(self)
+    challenge_task(self)
     start_bonus(self)
     rst = start_scan(self)
     if rst == 'return':
@@ -231,16 +402,19 @@ def finish_task(self):
     self.md['story_exp']['enable'] = False
     self.md['task_exp']['enable'] = False
     self.md['bonus']['enable'] = False
+    if 'challenge-task' in self.md:
+        self.md['challenge-task']['enable'] = False
     return None
 
 
 def challenge_task(self):
-    if not self.tc['challenge-task']['enable']:
+    if not self.tc.get('challenge-task', {}).get('enable', False):
         return None
     self.log_title('开始国服活动-挑战任务')
     tasks = {2: (1100, 280), 4: (1100, 475)}
     for s, p in tasks.items():
         to_activity_page(self)
+        to_tab(self, 'challenge')
         image.detect(self, 'normal_task_task-info', p, cl=p)
         start_fight(self, 'exp', 0, s, 'challenge-task')
     return None
@@ -251,8 +425,10 @@ def start_dice(self):
         return None
     self.log_title('开始国服活动-掷骰子')
     to_activity_page(self)
-    pos = {current_men: (515, 635)}
-    image.detect(self, 'cm_dice-menu', pos, 1, retry=1)
+    if not _enter_activity_feature_page(
+        self, 'cm_dice-menu', ('骰子', '赛跑'), (515, 635),
+    ):
+        return None
     time.sleep(1)
     while True:
         if image.compare_image(self, 'cm_dice-need', 0, retry=0):
@@ -267,8 +443,13 @@ def start_exchange(self):
         return None
     self.log_title('开始国服活动-兑换奖励')
     to_activity_page(self)
-    pos = {current_men: (306, 614)}
-    image.detect(self, 'cm_activity-exchange-menu', pos, 1, retry=1)
+    if not _enter_activity_feature_page(
+        self,
+        'cm_activity-exchange-menu',
+        ('兑换', '商店'),
+        (306, 614),
+    ):
+        return None
     time.sleep(1)
     self.click(125, 100, False)
     time.sleep(1)
@@ -380,22 +561,97 @@ def start_draw_card(self):
     if not self.tc['draw_card']['enable']:
         return None
     to_activity_page(self)
-    pos = {current_men: (520, 640)}
-    image.detect(self, 'brzx_draw-menu', pos)
-    time.sleep(2)
-    while True:
-        if color.check_rgb(self, (800, 600), (118, 220, 255)):
-            image.detect(self, 'brzx_card', cl=(815, 568))
-        if not color.check_rgb(self, (970, 590), (245, 233, 74)):
-            self.logger.error('不能抽卡了...')
+    if not _enter_activity_feature_page(
+        self, 'brzx_draw-menu', ('抽卡', '卡片商店'), (520, 640),
+    ):
+        return None
+    time.sleep(1)
+    return draw_cards_on_current_page(self)
+
+
+def draw_cards_on_current_page(self):
+    for _ in range(DRAW_MAX_ACTIONS):
+        screenshot = self.get_screenshot_array()
+        state = _draw_card_state(self, screenshot)
+        if state == 'done':
+            self.logger.info('活动卡片道具不足，结束抽卡')
             return None
-        time.sleep(0.1)
-        self.click(1050, 560)
-        ends = (('brzx_not-210', 0.9), ('brzx_210', 0.9))
-        end = image.detect(self, ends, rate=0)
-        if end == 'brzx_not-210':
-            self.logger.error('不能抽卡了...')
+        if state == 'shuffle':
+            self.click(*DRAW_SHUFFLE_BUTTON_POS, False)
+            time.sleep(1)
+            continue
+        self.click(*DRAW_SINGLE_BUTTON_POS, False)
+        _close_draw_reward(self)
+    raise restart.RestartTaskException('活动卡片商店操作次数异常')
+
+
+def _close_draw_reward(self):
+    if not image.compare_image(
+        self,
+        'cm_get-prize',
+        retry=60,
+        threshold=0.8,
+    ):
+        raise restart.RestartTaskException('活动卡片奖励弹窗识别失败')
+    self.click(640, 635, False)
+    if not image.compare_image(
+        self,
+        'cm_get-prize',
+        retry=60,
+        threshold=0.8,
+        n=True,
+    ):
+        raise restart.RestartTaskException('活动卡片奖励弹窗关闭失败')
+
+
+def _draw_card_state(self, screenshot):
+    if color.check_rgb(
+        self,
+        DRAW_SINGLE_COLOR_POS,
+        (118, 220, 255),
+        threshold=45,
+        ss_data=screenshot,
+    ):
+        return 'draw'
+
+    resource = _draw_number(self, DRAW_RESOURCE_AREA, screenshot)
+    cost = _draw_number(self, DRAW_SINGLE_COST_AREA, screenshot)
+    if resource is None or cost is None or resource < cost:
+        return 'done'
+    if color.check_rgb(
+        self,
+        DRAW_SHUFFLE_COLOR_POS,
+        (45, 70, 99),
+        threshold=55,
+        ss_data=screenshot,
+    ):
+        return 'shuffle'
+    return 'done'
+
+
+def _draw_number(self, area, screenshot):
+    engine = getattr(self, 'ocrNum', None)
+    if engine is None:
+        self.logger.warning('数字 OCR 未初始化，停止活动卡片商店操作')
+        return None
+    try:
+        crop = image.screenshot_cut(self, area, 0, False, ss=screenshot)
+        output = engine.ocr(crop) or []
+        if not output:
             return None
+        item = max(output, key=lambda value: float(value.get('score', 1.0)))
+        text = str(item.get('text', ''))
+        score = float(item.get('score', 1.0))
+        digits = ''.join(char for char in text if char.isdigit())
+        value = int(digits) if digits and score >= 0.25 else None
+        self.logger.info(
+            '活动卡片数字 OCR area:%s text:%s score:%.3f value:%s',
+            area, text, score, value,
+        )
+        return value
+    except Exception as exc:
+        self.logger.warning('活动卡片商店数字 OCR 失败:%s', exc)
+        return None
 
 
 def start_bonus(self):
@@ -442,11 +698,8 @@ def do_exp(self, tab):
     for _ in range(max_runs):
         to_activity_page(self)
         enter_activity_stage_page(self)
-        tmp = 'story' if tab == 'task' else 'task'
-        to_tab(self, tmp)
-        to_activity_page(self)
         to_tab(self, tab)
-        stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
+        reset_activity_stage_list(self, tab)
         state, stage_index = calc_need_fight_stage(self, tab)
         if state is None:
             self.logger.info('活动%s开图已完成，没有需要战斗的关卡', tab)
@@ -455,6 +708,16 @@ def do_exp(self, tab):
     raise restart.RestartTaskException(
         '活动{0}开图超过最大关卡数，停止本轮任务'.format(tab)
     )
+
+
+def reset_activity_stage_list(self, tab):
+    stage.screen_swipe(
+        self, 0, False, threshold2=False, reset=False,
+        f=(926, 150, 926, 720, 0.1),
+    )
+    if tab == 'task':
+        self.swipe(930, 300, 930, 520, 0.5)
+        time.sleep(1)
 
 
 prev_bonus_index = -1
@@ -521,10 +784,52 @@ def wait_fight_over(self):
         'momo_talk_confirm-skip': (770, 516), 'cn_activity_unlock': (1259, 62),
         'cm_get-prize': (650, 640),
     }
-    result = image.detect(self, ACTIVITY_PAGE_MARKERS, possible, retry=300)
+    result = image.detect(
+        self,
+        ACTIVITY_PAGE_MARKERS,
+        possible,
+        pre_func=handle_activity_fight_prompt,
+        pre_argv=(self,),
+        retry=300,
+    )
     if result is None:
         raise restart.RestartTaskException('战斗结束后无法返回活动页面')
     return None
+
+
+def handle_activity_fight_prompt(self):
+    now = time.monotonic()
+    last_check = getattr(self, '_last_activity_fight_prompt_ocr', 0.0)
+    if now - last_check < 1.5:
+        return None
+    self._last_activity_fight_prompt_ocr = now
+
+    engine = getattr(self, 'ocr', None)
+    screenshot = getattr(self, 'latest_img_array', None)
+    if engine is None or screenshot is None:
+        return None
+    try:
+        output = engine.ocr(screenshot[70:710, 250:1030]) or []
+        text = ''.join(
+            str(item.get('text', ''))
+            for item in output
+            if isinstance(item, dict)
+        ).replace(' ', '')
+    except Exception as exc:
+        self.logger.debug('活动战斗提示 OCR 失败:%s', exc)
+        return None
+
+    if '战败' in text and '确认' in text:
+        self.logger.info('识别到活动战败结算，点击确认')
+        self.click(640, 655, False)
+        return ('click', 'progress')
+
+    is_battle_tip = all(label in text for label in ('提示', '返回大厅', '确认'))
+    if not is_battle_tip:
+        return None
+    self.logger.info('识别到活动战斗提示，点击确认')
+    self.click(775, 660, False)
+    return ('click', 'progress')
 
 
 def do_special_fight_or_scan(self):
@@ -543,7 +848,7 @@ def skip_story(self):
     return result
 
 
-def wait_task_info(self, open_info=True):
+def wait_task_info(self, open_info=True, click_pos=(1130, 190)):
     markers = (
         'cn_activity_info-window',
         'normal_task_task-info',
@@ -553,7 +858,7 @@ def wait_task_info(self, open_info=True):
         result = image.detect(
             self,
             markers,
-            cl=(1130, 190),
+            cl=click_pos,
             rate=0.5,
             retry=20,
         )
@@ -564,7 +869,7 @@ def wait_task_info(self, open_info=True):
 
 
 def calc_need_fight_stage(self, tab):
-    wait_task_info(self)
+    wait_task_info(self, click_pos=ACTIVITY_FIRST_STAGE_POS[tab])
     supported = sorted(
         int(key.rsplit('-', 1)[1])
         for key in stage_data

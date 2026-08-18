@@ -109,7 +109,6 @@ def start_scan(self):
         'normal_task_quick-battle-notice2': (770, 500),
         'normal_task_quick-battle-notice3': (770, 500),
         'normal_task_quick-battle-notice4': (770, 500),
-        'normal_task_scan-skip': (647, 506),
     }
 
     image.detect(self, 'normal_task_scan-confirm', pos,

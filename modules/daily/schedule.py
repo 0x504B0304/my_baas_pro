@@ -5,6 +5,10 @@ import numpy as np
 from common import image, ocr, stage
 from modules.baas import home
 
+
+COURSE_INFO_TITLE_AREA = (400, 60, 880, 190)
+COURSE_INFO_CLOSE_POS = (964, 114)
+
 schedule_position = {
     1: (908, 182),
     2: (908, 285),
@@ -68,6 +72,7 @@ curse_avatar_box = {
 
 
 def to_schedule(self):
+    close_course_info(self)
     pos = {
         'home_student': (212, 656),
         'schedule_choose-course': (59, 36),
@@ -92,11 +97,7 @@ def choose_course(self):
         to_college(self, tk['schedule'])
         if learn_course(self, tk['schedule'], tk['count']):
             return
-        pos = {
-            'schedule_course-info': (59, 36),
-            'schedule_choose-course': (59, 36),
-        }
-        home.to_menu(self, 'schedule_menu', pos)
+        to_schedule(self)
 
 
 def to_college(self, college):
@@ -119,6 +120,27 @@ def open_all_course(self):
         'schedule_course-info': (1174, 666),
     }
     image.detect(self, 'schedule_all-course', pos)
+
+
+def course_info_popup_visible(self):
+    if self.game_server != 'cn' or getattr(self, 'ocr', None) is None:
+        return False
+    return ocr.screenshot_check_text(
+        self,
+        '日程信息',
+        COURSE_INFO_TITLE_AREA,
+        0,
+        0,
+        False,
+    )
+
+
+def close_course_info(self):
+    if not course_info_popup_visible(self):
+        return False
+    self.click(*COURSE_INFO_CLOSE_POS, False)
+    time.sleep(0.5)
+    return True
 
 
 def close_all_course(self):

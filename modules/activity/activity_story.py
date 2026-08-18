@@ -34,6 +34,7 @@ def do_exp(self):
     svc = {'cn': cn_activity, 'jp': jp_activity, 'intl': intl_activity}
     time.sleep(2)
     svc[self.game_server].to_activity_page(self)
+    svc[self.game_server].to_tab(self, tab)
     stage.screen_swipe(self, 0, False, threshold2=False, reset=False, f=(926, 150, 926, 720, 0.1))
     state, stage_index = svc[self.game_server].calc_need_fight_stage(self, tab)
     if state is None:

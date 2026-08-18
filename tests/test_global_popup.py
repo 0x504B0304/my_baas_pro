@@ -95,10 +95,33 @@ class GlobalPopupTests(unittest.TestCase):
 
 
 class MenuRetryTests(unittest.TestCase):
+    def test_go_home_does_not_reopen_menu_after_home_is_detected(self):
+        fake = SimpleNamespace(
+            game_server='cn',
+            click=Mock(),
+            double_click=Mock(),
+            logger=SimpleNamespace(info=Mock()),
+        )
+        with patch.object(home, 'wake_home_ui'), \
+             patch.object(home.image, 'detect', return_value='home_student'):
+            self.assertTrue(home.recursion_click_house(fake))
+        fake.click.assert_not_called()
+        fake.double_click.assert_not_called()
+
+    def test_to_menu_does_not_click_screen_before_detecting_current_page(self):
+        fake = SimpleNamespace(click=Mock())
+        with patch.object(home, 'wake_home_ui') as wake, \
+             patch.object(home.image, 'detect', return_value='schedule_menu'):
+            self.assertEqual(
+                home.to_menu(fake, 'schedule_menu', {}),
+                'schedule_menu',
+            )
+        wake.assert_not_called()
+        fake.click.assert_not_called()
+
     def test_to_menu_raises_when_retry_limit_is_reached(self):
         fake = SimpleNamespace(click=Mock())
-        with patch.object(home, 'wake_home_ui', return_value=None), \
-             patch.object(home.image, 'detect', return_value=None) as detect:
+        with patch.object(home.image, 'detect', return_value=None) as detect:
             with self.assertRaisesRegex(
                 restart.RestartTaskException,
                 '进入菜单失败，超过3次图片检索: arena_menu',

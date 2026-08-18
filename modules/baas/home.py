@@ -39,7 +39,6 @@ def wake_home_ui(self):
 
 
 def to_menu(self, end, pos, cl=None, rate=None, retry=999):
-    wake_home_ui(self)
     possible = {
         'restart_news': (1232, 42),
         'home_news': (1140, 100),
@@ -89,6 +88,4 @@ def recursion_click_house(self):
     if rst is None:
         self.logger.info('多次返回首页失败! 开始重启')
         return False
-    self.click(1233, 11, False)
-    self.double_click(851, 262, False)
     return True
