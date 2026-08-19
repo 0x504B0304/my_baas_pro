@@ -9,6 +9,9 @@ from modules.baas import home, restart
 
 
 class FakeLogger:
+    def info(self, *_args, **_kwargs):
+        pass
+
     def warning(self, *_args, **_kwargs):
         pass
 
@@ -108,6 +111,19 @@ class MenuRetryTests(unittest.TestCase):
         fake.click.assert_not_called()
         fake.double_click.assert_not_called()
 
+    def test_go_home_passes_story_recovery_to_detector(self):
+        fake = SimpleNamespace(
+            game_server='cn',
+            click=Mock(),
+            double_click=Mock(),
+            logger=SimpleNamespace(info=Mock()),
+        )
+        with patch.object(home, 'wake_home_ui'), \
+             patch.object(home.image, 'detect', return_value='home_student') as detect:
+            self.assertTrue(home.recursion_click_house(fake))
+        self.assertIs(detect.call_args.kwargs['pre_func'], home.recover_story_playback)
+        self.assertEqual(detect.call_args.kwargs['pre_argv'], (fake,))
+
     def test_to_menu_does_not_click_screen_before_detecting_current_page(self):
         fake = SimpleNamespace(click=Mock())
         with patch.object(home, 'wake_home_ui') as wake, \
@@ -128,6 +144,61 @@ class MenuRetryTests(unittest.TestCase):
             ):
                 home.to_menu(fake, 'arena_menu', {}, retry=3)
         self.assertEqual(detect.call_args.kwargs['retry'], 3)
+
+
+class StoryHomeRecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.fake = SimpleNamespace(
+            latest_img_array=np.zeros((720, 1280, 3), dtype=np.uint8),
+            click=Mock(),
+            logger=FakeLogger(),
+        )
+
+    def test_clicks_skip_before_menu_when_toolbar_is_open(self):
+        def compare(_self, name, *_args, **_kwargs):
+            return name in ('momo_talk_skip', 'momo_talk_menu')
+
+        with patch.object(home.image, 'compare_image', side_effect=compare):
+            result = home.recover_story_playback(self.fake)
+
+        self.assertEqual(result, ('click', 'story_skip', 'progress'))
+        self.fake.click.assert_called_once_with(1212, 116, False)
+
+    def test_opens_story_menu_when_no_choice_is_visible(self):
+        def compare(_self, name, *_args, **_kwargs):
+            return name == 'momo_talk_menu'
+
+        with patch.object(home.image, 'compare_image', side_effect=compare):
+            result = home.recover_story_playback(self.fake)
+
+        self.assertEqual(result, ('click', 'story_menu', 'progress'))
+        self.fake.click.assert_called_once_with(1205, 42, False)
+
+    def test_selects_first_of_two_story_choices(self):
+        screenshot = self.fake.latest_img_array
+        screenshot[240:281, 230:1050] = 255
+        screenshot[328:369, 230:1050] = 255
+
+        def compare(_self, name, *_args, **_kwargs):
+            return name == 'momo_talk_menu'
+
+        with patch.object(home.image, 'compare_image', side_effect=compare):
+            result = home.recover_story_playback(self.fake)
+
+        self.assertEqual(result, ('click', 'story_choice', 'progress'))
+        self.fake.click.assert_called_once_with(640, 260, False)
+
+    def test_selects_centered_single_story_choice(self):
+        self.fake.latest_img_array[284:325, 230:1050] = 255
+
+        def compare(_self, name, *_args, **_kwargs):
+            return name == 'momo_talk_menu'
+
+        with patch.object(home.image, 'compare_image', side_effect=compare):
+            result = home.recover_story_playback(self.fake)
+
+        self.assertEqual(result, ('click', 'story_choice', 'progress'))
+        self.fake.click.assert_called_once_with(640, 304, False)
 
 
 if __name__ == '__main__':

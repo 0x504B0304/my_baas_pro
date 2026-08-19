@@ -60,6 +60,52 @@ def click_house_under(self):
     self.double_click(1268, 58, False)
 
 
+def _story_choice_y(screenshot):
+    """Return the first visible story choice row, if any."""
+    for y in (260, 304, 348):
+        inside = screenshot[y - 20:y + 21, 230:1050]
+        left = screenshot[y - 20:y + 21, 40:170]
+        right = screenshot[y - 20:y + 21, 1110:1240]
+        if not inside.size or not left.size or not right.size:
+            continue
+        inside_bright = ((inside > 200).all(axis=2)).mean()
+        outside_bright = max(
+            ((left > 200).all(axis=2)).mean(),
+            ((right > 200).all(axis=2)).mean(),
+        )
+        if inside_bright >= 0.75 and inside_bright - outside_bright >= 0.5:
+            return y
+    return None
+
+
+def recover_story_playback(self):
+    screenshot = self.latest_img_array
+    if image.compare_image(
+            self, 'momo_talk_confirm-skip', 0, 0.5, ss=screenshot):
+        self.logger.info('回首页时检测到剧情跳过确认')
+        self.click(770, 516, False)
+        return 'click', 'story_confirm_skip', 'progress'
+
+    if image.compare_image(self, 'momo_talk_skip', 0, 0.7, ss=screenshot):
+        self.logger.info('回首页时检测到剧情快进按钮')
+        self.click(1212, 116, False)
+        return 'click', 'story_skip', 'progress'
+
+    if not image.compare_image(
+            self, 'momo_talk_menu', 0, 0.75, ss=screenshot):
+        return None
+
+    choice_y = _story_choice_y(screenshot)
+    if choice_y is not None:
+        self.logger.info('回首页时检测到剧情分支选项:y=%s', choice_y)
+        self.click(640, choice_y, False)
+        return 'click', 'story_choice', 'progress'
+
+    self.logger.info('回首页时检测到剧情播放界面，展开菜单')
+    self.click(1205, 42, False)
+    return 'click', 'story_menu', 'progress'
+
+
 def recursion_click_house(self):
     """
     递归点击首页按钮，如果返回False则返回首页失败，反之返回首页成功
@@ -84,7 +130,15 @@ def recursion_click_house(self):
         'work_task_big-month-menu': (1245, 40),
     }
     ends = ('home_setting', 'home_student')
-    rst = image.detect(self, ends, pos, cl=(1233, 11), retry=500)
+    rst = image.detect(
+        self,
+        ends,
+        pos,
+        cl=(1233, 11),
+        pre_func=recover_story_playback,
+        pre_argv=(self,),
+        retry=500,
+    )
     if rst is None:
         self.logger.info('多次返回首页失败! 开始重启')
         return False
