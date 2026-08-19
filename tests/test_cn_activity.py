@@ -426,6 +426,8 @@ class ActivityExpansionTests(unittest.TestCase):
             cn_activity.handle_activity_fight_prompt,
         )
         self.assertEqual(detect.call_args.kwargs['pre_argv'], (fake,))
+        possibles = detect.call_args.args[2]
+        self.assertEqual(next(iter(possibles)), 'cm_get-prize')
 
     def test_enter_activity_stage_page_returns_when_already_on_stage_page(self):
         fake = SimpleNamespace()

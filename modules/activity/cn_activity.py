@@ -782,12 +782,12 @@ def start_fight(self, t, bonus_index, stage_index, tab):
 
 def wait_fight_over(self):
     possible = {
+        'cm_get-prize': (650, 640),
         'main_story_fight-confirm': (1168, 659), 'main_story_fight-fail': (647, 655),
         'fight_pass-confirm': (1170, 666), 'fight_task-finish-confirm': (1033, 666),
         'fight_prize-confirm1': (645, 670), 'fight_prize-confirm2': (775, 660),
         'momo_talk_menu': (1205, 42), 'momo_talk_skip': (1212, 116),
         'momo_talk_confirm-skip': (770, 516), 'cn_activity_unlock': (1259, 62),
-        'cm_get-prize': (650, 640),
     }
     result = image.detect(
         self,
