@@ -245,6 +245,10 @@ ACTIVITY_FIRST_STAGE_POS = {
     'story': (1130, 190),
     'task': (1130, 190),
 }
+ACTIVITY_STORY_BUTTON_AREA = (1070, 145, 1195, 695)
+ACTIVITY_STORY_NUMBER_X = (700, 770)
+ACTIVITY_STORY_ICON_X = (715, 750)
+ACTIVITY_STORY_ROW_MIN_HEIGHT = 30
 DRAW_RESOURCE_AREA = (712, 165, 790, 202)
 DRAW_SINGLE_COST_AREA = (780, 520, 870, 565)
 DRAW_SINGLE_BUTTON_POS = (815, 568)
@@ -762,7 +766,8 @@ def start_fight(self, t, bonus_index, stage_index, tab):
         image.compare_image(self, 'fight_force-edit')
         gk = f'{tab}-{stage_index}'
         if t == 'exp':
-            if isinstance(stage_data[gk], int):
+            # 活动故事战斗使用固定编队，新版本会禁用右侧的预设入口。
+            if tab != 'story' and isinstance(stage_data[gk], int):
                 stage.choose_role(self, stage_data[gk])
         elif prev_bonus_index != bonus_index:
             exp_normal_task.start_bonus_single(self, bonus_index)
@@ -869,6 +874,9 @@ def wait_task_info(self, open_info=True, click_pos=(1130, 190)):
 
 
 def calc_need_fight_stage(self, tab):
+    if tab == 'story':
+        return calc_need_story_stage(self)
+
     wait_task_info(self, click_pos=ACTIVITY_FIRST_STAGE_POS[tab])
     supported = sorted(
         int(key.rsplit('-', 1)[1])
@@ -888,29 +896,132 @@ def calc_need_fight_stage(self, tab):
     return (None, 0)
 
 
+def calc_need_story_stage(self):
+    supported = {
+        int(key.rsplit('-', 1)[1])
+        for key in stage_data
+        if key.startswith('story-')
+    }
+    for _ in range(6):
+        screenshot = self.get_screenshot_array()
+        unlocked_rows = _story_stage_button_rows(screenshot, unlocked=True)
+        for center_y in unlocked_rows:
+            stage_index = _story_stage_number(self, screenshot, center_y)
+            if stage_index not in supported:
+                continue
+            completed = _story_stage_completed(screenshot, center_y)
+            self.logger.info(
+                '活动故事列表关卡:%s 状态:%s',
+                stage_index,
+                '已完成' if completed else '未完成',
+            )
+            if completed:
+                continue
+            wait_task_info(self, click_pos=(1130, center_y))
+            return ('no-sss', stage_index)
+
+        locked_rows = _story_stage_button_rows(screenshot, unlocked=False)
+        if locked_rows:
+            self.logger.info('活动故事列表已到达首个未解锁关卡')
+            return (None, 0)
+
+        before = screenshot[
+            ACTIVITY_STORY_BUTTON_AREA[1]:ACTIVITY_STORY_BUTTON_AREA[3],
+            ACTIVITY_STORY_BUTTON_AREA[0]:ACTIVITY_STORY_BUTTON_AREA[2],
+        ].copy()
+        self.swipe(930, 620, 930, 260, 0.5)
+        time.sleep(1)
+        after = self.get_screenshot_array()[
+            ACTIVITY_STORY_BUTTON_AREA[1]:ACTIVITY_STORY_BUTTON_AREA[3],
+            ACTIVITY_STORY_BUTTON_AREA[0]:ACTIVITY_STORY_BUTTON_AREA[2],
+        ]
+        if before.shape == after.shape:
+            delta = float(np.mean(np.abs(before.astype(np.int16) - after.astype(np.int16))))
+            if delta < 2.0:
+                self.logger.info('活动故事列表已滚动到底部')
+                return (None, 0)
+
+    raise restart.RestartTaskException('活动故事列表扫描超过最大页数')
+
+
+def _story_stage_button_rows(screenshot, unlocked):
+    x1, y1, x2, y2 = ACTIVITY_STORY_BUTTON_AREA
+    crop = screenshot[y1:y2, x1:x2]
+    blue = crop[:, :, 0]
+    green = crop[:, :, 1]
+    red = crop[:, :, 2]
+    if unlocked:
+        mask = (blue > 180) & (green > 140) & (red < 170)
+    else:
+        mask = (
+            (blue > 55) & (blue < 130) &
+            (green > 35) & (green < 110) &
+            (red < 80)
+        )
+    present = np.count_nonzero(mask, axis=1) > 40
+    edges = np.diff(np.r_[False, present, False].astype(np.int8))
+    starts = np.flatnonzero(edges == 1)
+    ends = np.flatnonzero(edges == -1)
+    return [
+        y1 + (int(start) + int(end)) // 2
+        for start, end in zip(starts, ends)
+        if end - start >= ACTIVITY_STORY_ROW_MIN_HEIGHT
+    ]
+
+
+def _story_stage_number(self, screenshot, center_y):
+    engine = getattr(self, 'ocrNum', None)
+    if engine is None:
+        raise restart.RestartTaskException('数字OCR未初始化，无法读取活动故事关卡')
+    x1, x2 = ACTIVITY_STORY_NUMBER_X
+    crop = screenshot[max(0, center_y - 35):center_y + 5, x1:x2]
+    try:
+        output = engine.ocr(crop) or []
+    except Exception as exc:
+        raise restart.RestartTaskException(
+            '活动故事列表关卡编号OCR失败:{0}'.format(exc)
+        ) from exc
+    candidates = []
+    for item in output:
+        text = str(item.get('text', ''))
+        digits = ''.join(char for char in text if char.isdigit())
+        if digits:
+            candidates.append((float(item.get('score', 0.0)), int(digits)))
+    if not candidates:
+        self.logger.warning('活动故事列表关卡编号OCR无结果:y=%s', center_y)
+        return None
+    score, stage_index = max(candidates)
+    if score < 0.4:
+        self.logger.warning(
+            '活动故事列表关卡编号OCR置信度过低:y=%s score=%.3f',
+            center_y,
+            score,
+        )
+        return None
+    return stage_index
+
+
+def _story_stage_completed(screenshot, center_y):
+    x1, x2 = ACTIVITY_STORY_ICON_X
+    crop = screenshot[center_y:center_y + 32, x1:x2]
+    if crop.size == 0:
+        return False
+    blue = crop[:, :, 0]
+    green = crop[:, :, 1]
+    red = crop[:, :, 2]
+    yellow = (blue < 130) & (green > 140) & (red > 160)
+    return int(np.count_nonzero(yellow)) >= 8
+
+
 def check_task_state(self, tab):
     time.sleep(1)
     # 活动详情是覆盖在活动页上的弹窗，底层的 notice/menu 模板仍可能可见。
     # 因此只能以详情窗口是否存在判断是否已经遍历到末尾。
     if not wait_task_info(self, False):
         return None
-    if tab == 'story':
-        return 'no-sss' if is_story_stage_unfinished(self) else 'sss'
     if image.compare_image(self, 'normal_task_sss', 0, 0.9):
         return 'sss'
     return 'no-sss'
-
-
-def is_story_stage_unfinished(self):
-    # 剧情可以重复进入并消耗体力，不能用“进入剧情”判断是否未看。
-    # 只有奖励区出现“首次”时，才说明这条故事还没有完成。
-    if image.compare_image(self, 'cn_activity_first-reward-blue', 0, 0.75):
-        return True
-    if image.compare_image(self, 'cn_activity_first-reward', 0, 0.8):
-        return True
-    if getattr(self, 'ocr', None) is not None and ocr.screenshot_check_text(self, '首次', (340, 300, 665, 395), 0, 0, False):
-        return True
-    return False
 
 
 def activity_stage_position(gq, special=False):

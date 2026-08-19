@@ -523,7 +523,7 @@ class ActivityExpansionTests(unittest.TestCase):
         fake = SimpleNamespace(logger=FakeLogger(), click=Mock())
         with patch.object(cn_activity, 'wait_task_info', return_value=True), \
              patch.object(cn_activity, 'check_task_state', return_value='sss'):
-            self.assertEqual(cn_activity.calc_need_fight_stage(fake, 'story'), (None, 0))
+            self.assertEqual(cn_activity.calc_need_fight_stage(fake, 'task'), (None, 0))
         self.assertEqual(fake.click.call_count, 15)
 
     def test_wait_task_info_uses_current_cn_entry_position(self):
@@ -558,78 +558,65 @@ class ActivityExpansionTests(unittest.TestCase):
         )
         fake.swipe.assert_called_once_with(930, 300, 930, 520, 0.5)
 
-    @patch.object(cn_activity.time, 'sleep', return_value=None)
-    def test_story_blue_first_reward_marks_unfinished_stage(self, _sleep):
-        fake = SimpleNamespace()
-        with patch.object(cn_activity, 'wait_task_info', return_value=True), \
-             patch.object(
-                 cn_activity.image,
-                 'compare_image',
-                 side_effect=lambda _self, name, *_args, **_kwargs: name == 'cn_activity_first-reward-blue',
-             ) as compare_image, \
-             patch.object(cn_activity.ocr, 'screenshot_check_text') as check_text:
-            self.assertEqual(cn_activity.check_task_state(fake, 'story'), 'no-sss')
-        compare_image.assert_called_once_with(fake, 'cn_activity_first-reward-blue', 0, 0.75)
-        check_text.assert_not_called()
-
-    @patch.object(cn_activity.time, 'sleep', return_value=None)
-    def test_story_ocr_first_reward_marks_unfinished_stage(self, _sleep):
-        fake = SimpleNamespace(ocr=object())
-        with patch.object(cn_activity, 'wait_task_info', return_value=True), \
-             patch.object(cn_activity.image, 'compare_image', return_value=False) as compare_image, \
-             patch.object(cn_activity.ocr, 'screenshot_check_text', return_value=True) as check_text:
-            self.assertEqual(cn_activity.check_task_state(fake, 'story'), 'no-sss')
+    def test_story_list_detects_unlocked_and_locked_button_rows(self):
+        screenshot = np.zeros((720, 1280, 3), dtype=np.uint8)
+        screenshot[165:228, 1070:1195] = (230, 190, 90)
+        screenshot[363:426, 1070:1195] = (85, 65, 40)
         self.assertEqual(
-            compare_image.call_args_list,
-            [
-                call(fake, 'cn_activity_first-reward-blue', 0, 0.75),
-                call(fake, 'cn_activity_first-reward', 0, 0.8),
-            ],
+            cn_activity._story_stage_button_rows(screenshot, unlocked=True),
+            [196],
         )
-        check_text.assert_called_once_with(fake, '首次', (340, 300, 665, 395), 0, 0, False)
-
-    @patch.object(cn_activity.time, 'sleep', return_value=None)
-    def test_story_first_reward_fallback_marks_unfinished_stage(self, _sleep):
-        fake = SimpleNamespace()
-        with patch.object(cn_activity, 'wait_task_info', return_value=True), \
-             patch.object(
-                 cn_activity.image,
-                 'compare_image',
-                 side_effect=lambda _self, name, *_args, **_kwargs: name == 'cn_activity_first-reward',
-             ) as compare_image, \
-             patch.object(cn_activity.ocr, 'screenshot_check_text', return_value=False):
-            self.assertEqual(cn_activity.check_task_state(fake, 'story'), 'no-sss')
         self.assertEqual(
-            compare_image.call_args_list,
-            [
-                call(fake, 'cn_activity_first-reward-blue', 0, 0.75),
-                call(fake, 'cn_activity_first-reward', 0, 0.8),
-            ],
+            cn_activity._story_stage_button_rows(screenshot, unlocked=False),
+            [394],
         )
 
-    @patch.object(cn_activity.time, 'sleep', return_value=None)
-    def test_story_without_unfinished_markers_marks_completed_stage(self, _sleep):
-        fake = SimpleNamespace()
-        with patch.object(cn_activity, 'wait_task_info', return_value=True), \
-             patch.object(cn_activity.image, 'compare_image', return_value=False) as compare_image, \
-             patch.object(cn_activity.ocr, 'screenshot_check_text', return_value=False):
-            self.assertEqual(cn_activity.check_task_state(fake, 'story'), 'sss')
-        self.assertEqual(
-            compare_image.call_args_list,
-            [
-                call(fake, 'cn_activity_first-reward-blue', 0, 0.75),
-                call(fake, 'cn_activity_first-reward', 0, 0.8),
-            ],
-        )
+    def test_story_list_uses_yellow_icon_as_completed_marker(self):
+        screenshot = np.zeros((720, 1280, 3), dtype=np.uint8)
+        screenshot[200:220, 720:740] = (20, 190, 240)
+        self.assertTrue(cn_activity._story_stage_completed(screenshot, 196))
+        screenshot[200:220, 720:740] = (180, 180, 180)
+        self.assertFalse(cn_activity._story_stage_completed(screenshot, 196))
 
-    @patch.object(cn_activity.time, 'sleep', return_value=None)
-    def test_story_without_ocr_object_marks_completed_stage(self, _sleep):
-        fake = SimpleNamespace(ocr=None)
-        with patch.object(cn_activity, 'wait_task_info', return_value=True), \
-             patch.object(cn_activity.image, 'compare_image', return_value=False), \
-             patch.object(cn_activity.ocr, 'screenshot_check_text') as check_text:
-            self.assertEqual(cn_activity.check_task_state(fake, 'story'), 'sss')
-        check_text.assert_not_called()
+    def test_story_scan_opens_first_unfinished_unlocked_stage(self):
+        screenshot = np.zeros((720, 1280, 3), dtype=np.uint8)
+        fake = SimpleNamespace(
+            logger=FakeLogger(),
+            get_screenshot_array=Mock(return_value=screenshot),
+        )
+        with patch.object(
+            cn_activity,
+            '_story_stage_button_rows',
+            side_effect=[[196, 295], [394]],
+        ), patch.object(
+            cn_activity,
+            '_story_stage_number',
+            side_effect=[5, 6],
+        ), patch.object(
+            cn_activity,
+            '_story_stage_completed',
+            side_effect=[True, False],
+        ), patch.object(cn_activity, 'wait_task_info') as wait_info:
+            result = cn_activity.calc_need_story_stage(fake)
+        self.assertEqual(result, ('no-sss', 6))
+        wait_info.assert_called_once_with(fake, click_pos=(1130, 295))
+
+    def test_story_scan_stops_at_first_locked_stage(self):
+        screenshot = np.zeros((720, 1280, 3), dtype=np.uint8)
+        fake = SimpleNamespace(
+            logger=FakeLogger(),
+            get_screenshot_array=Mock(return_value=screenshot),
+        )
+        with patch.object(
+            cn_activity,
+            '_story_stage_button_rows',
+            side_effect=[[196], [295]],
+        ), patch.object(cn_activity, '_story_stage_number', return_value=6), \
+             patch.object(cn_activity, '_story_stage_completed', return_value=True), \
+             patch.object(cn_activity, 'wait_task_info') as wait_info:
+            result = cn_activity.calc_need_story_stage(fake)
+        self.assertEqual(result, (None, 0))
+        wait_info.assert_not_called()
 
     @patch.object(cn_activity.time, 'sleep', return_value=None)
     def test_task_detail_uses_three_star_marker(self, _sleep):
@@ -657,6 +644,35 @@ class ActivityExpansionTests(unittest.TestCase):
              patch.object(cn_activity, 'start_fight') as start_fight:
             cn_activity.do_exp(fake, 'task')
         start_fight.assert_not_called()
+
+    def test_story_expansion_starts_detected_unfinished_stage(self):
+        fake = SimpleNamespace(logger=FakeLogger())
+        with patch.object(cn_activity, 'to_tab'), \
+             patch.object(cn_activity, 'to_activity_page'), \
+             patch.object(cn_activity, 'enter_activity_stage_page'), \
+             patch.object(cn_activity, 'reset_activity_stage_list'), \
+             patch.object(
+                 cn_activity,
+                 'calc_need_fight_stage',
+                 side_effect=[('no-sss', 6), (None, 0)],
+             ), \
+             patch.object(cn_activity, 'start_fight') as start_fight:
+            cn_activity.do_exp(fake, 'story')
+        start_fight.assert_called_once_with(fake, 'exp', 0, 6, 'story')
+
+    @patch.object(cn_activity.time, 'sleep', return_value=None)
+    def test_story_fixed_team_skips_disabled_preset_button(self, _sleep):
+        fake = SimpleNamespace(logger=FakeLogger())
+        with patch.object(
+            cn_activity.image,
+            'detect',
+            side_effect=['normal_task_force-edit', 'normal_task_force-edit'],
+        ), patch.object(cn_activity.image, 'compare_image', return_value=True), \
+             patch.object(cn_activity.stage, 'choose_role') as choose_role, \
+             patch.object(cn_activity.main_story, 'auto_fight'), \
+             patch.object(cn_activity, 'wait_fight_over'):
+            cn_activity.start_fight(fake, 'exp', 0, 6, 'story')
+        choose_role.assert_not_called()
 
     def test_skip_story_timeout_restarts_current_task(self):
         fake = SimpleNamespace()
