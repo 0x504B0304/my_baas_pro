@@ -34,7 +34,7 @@ jobs:
         run: python -m PyInstaller --distpath dist --workpath build --noconfirm build.spec
 
       - name: Upload artifact
-        if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && !startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: baas-${{ github.sha }}
