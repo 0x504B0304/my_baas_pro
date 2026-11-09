@@ -15,13 +15,20 @@ def _is_admin() -> bool:
         return False
 
 
-def baas_dashboard(con, pt, source, log_enabled):
-    from common.baas import Baas
-
+def baas_dashboard(con, pt, source, log_enabled, startup_check=False):
     log._log_enabled = log_enabled
     b = None
     restart.source = source
     try:
+        logger = log.create_logger(con)
+        from common.baas import Baas
+
+        if startup_check:
+            from common import config
+            config.load_ba_config(con)
+            logger.info('配置子进程启动检查通过')
+            pt[encrypt.md5(con)] = {'startup_checked': True}
+            return
         b = Baas(con, pt)
         b.dashboard()
     except Exception as e:

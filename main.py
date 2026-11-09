@@ -47,6 +47,24 @@ if __name__ == '__main__':
     process.manager = multiprocessing.Manager()
     process.processes_task = process.manager.dict()
 
+    # Exercise the frozen account worker without connecting to a game device.
+    if len(sys.argv) == 3 and sys.argv[1] == '--check-startup':
+        con = sys.argv[2]
+        worker = multiprocessing.Process(
+            target=process.baas_dashboard,
+            args=(con, process.processes_task, '', process.log._log_enabled, True),
+        )
+        worker.start()
+        worker.join(90)
+        if worker.is_alive():
+            worker.terminate()
+            worker.join()
+        from common.encrypt import md5
+        result = process.processes_task.get(md5(con), {})
+        success = worker.exitcode == 0 and result.get('startup_checked', False)
+        process.manager.shutdown()
+        sys.exit(0 if success else 1)
+
     # Only the original main process runs the GUI
     if os.getpid() == main_process_pid:
         migrate_errors = check_config()

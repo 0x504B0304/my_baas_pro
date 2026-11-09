@@ -22,16 +22,46 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build-lock.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -c requirements-build-lock.txt
+          pip check
+
+      - name: Test worker startup error handling
+        run: python -m unittest discover -s tests -p test_process_startup.py -v
 
       - name: Build onefile
         env:
           BAAS_ONEFILE: '1'
         run: python -m PyInstaller --distpath dist --workpath build --noconfirm build.spec
+
+      - name: Check frozen account worker
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist/configs -Force | Out-Null
+          Copy-Item web/static/baas.json dist/configs/startup-check.json
+          $probe = Start-Process -FilePath "$PWD/dist/baas.exe" -ArgumentList '--check-startup', 'startup-check' -PassThru
+          if (-not $probe.WaitForExit(120000)) {
+            Stop-Process -Id $probe.Id -Force
+            throw 'Frozen worker startup check timed out'
+          }
+          Get-Content dist/runtime/logs/*startup-check.log -ErrorAction SilentlyContinue
+          if ($probe.ExitCode -ne 0) {
+            throw "Frozen worker startup check failed: $($probe.ExitCode)"
+          }
+
+      - name: Upload startup diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-diagnostics-${{ github.sha }}
+          path: dist/runtime/logs/
+          if-no-files-found: ignore
 
       - name: Upload artifact
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && !startsWith(github.ref, 'refs/tags/')
